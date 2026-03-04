@@ -113,13 +113,25 @@ export default function HomeScreen({ currentUserName }: HomeScreenProps) {
             <li className="flex items-start gap-3">
               <span className="mt-0.5 w-6 h-6 rounded-full bg-blue-500/10 dark:bg-blue-400/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">4</span>
               <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
-                <strong>Check the weekly view</strong> to see your full week and track consistency over time.
+                <strong>Check the weekly view</strong> to see your full week and track consistency over time. Rest days show automatically.
               </p>
             </li>
             <li className="flex items-start gap-3">
               <span className="mt-0.5 w-6 h-6 rounded-full bg-blue-500/10 dark:bg-blue-400/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">5</span>
               <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
-                <strong>Manage your exercises</strong> and set up email reminders from the menu in the top-right corner.
+                <strong>Schedule exercises</strong> for specific days of the week. Tap the gear icon (top-right), go to Exercises, edit an exercise, and use the day picker to assign it to certain days. Unscheduled days become rest days.
+              </p>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="mt-0.5 w-6 h-6 rounded-full bg-blue-500/10 dark:bg-blue-400/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">6</span>
+              <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
+                <strong>Manage exercises & reminders</strong> from the gear icon in the top-right corner. You can add, edit, reorder, and configure email notifications.
+              </p>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="mt-0.5 w-6 h-6 rounded-full bg-blue-500/10 dark:bg-blue-400/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">7</span>
+              <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
+                <strong>Connect Strava</strong> to see your recent activities in one feed. Tap the gear icon, go to Strava, and link your account.
               </p>
             </li>
           </ul>
