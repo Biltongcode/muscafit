@@ -22,25 +22,47 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 
   const body = await req.json();
-  const { name, targetType, targetValue, targetSets, targetPerSet, notes, sortOrder, isActive } = body;
+
+  // Build dynamic update — only update fields that are present in the body
+  const fields: string[] = [];
+  const values: unknown[] = [];
+
+  const fieldMap: Record<string, string> = {
+    name: 'name',
+    targetType: 'target_type',
+    targetValue: 'target_value',
+    targetSets: 'target_sets',
+    targetPerSet: 'target_per_set',
+    notes: 'notes',
+    sortOrder: 'sort_order',
+    isActive: 'is_active',
+  };
+
+  for (const [jsKey, dbCol] of Object.entries(fieldMap)) {
+    if (jsKey in body) {
+      fields.push(`${dbCol} = ?`);
+      values.push(body[jsKey] ?? null);
+    }
+  }
+
+  if (fields.length === 0) {
+    return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
+  }
+
+  values.push(exerciseId, userId);
 
   db.prepare(
-    `UPDATE exercises SET
-       name = COALESCE(?, name),
-       target_type = COALESCE(?, target_type),
-       target_value = COALESCE(?, target_value),
-       target_sets = COALESCE(?, target_sets),
-       target_per_set = COALESCE(?, target_per_set),
-       notes = COALESCE(?, notes),
-       sort_order = COALESCE(?, sort_order),
-       is_active = COALESCE(?, is_active)
-     WHERE id = ? AND user_id = ?`
-  ).run(
-    name ?? null, targetType ?? null, targetValue ?? null,
-    targetSets ?? null, targetPerSet ?? null, notes ?? null,
-    sortOrder ?? null, isActive ?? null,
-    exerciseId, userId
-  );
+    `UPDATE exercises SET ${fields.join(', ')} WHERE id = ? AND user_id = ?`
+  ).run(...values);
 
-  return NextResponse.json({ success: true });
+  const updated = db
+    .prepare(
+      `SELECT id, name, target_type as targetType, target_value as targetValue,
+              target_sets as targetSets, target_per_set as targetPerSet,
+              notes, sort_order as sortOrder, is_active as isActive
+       FROM exercises WHERE id = ?`
+    )
+    .get(exerciseId);
+
+  return NextResponse.json({ exercise: updated });
 }

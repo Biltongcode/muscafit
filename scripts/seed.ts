@@ -76,14 +76,14 @@ db.exec(`
 
 // Seed users
 const password1 = bcrypt.hashSync('duncan123', 10);
-const password2 = bcrypt.hashSync('partner123', 10);
+const password2 = bcrypt.hashSync('fred123', 10);
 
 const insertUser = db.prepare(`
   INSERT OR IGNORE INTO users (name, email, password_hash) VALUES (?, ?, ?)
 `);
 
 insertUser.run('Duncan', 'duncan@muscafit.local', password1);
-insertUser.run('Training Partner', 'partner@muscafit.local', password2);
+insertUser.run('Fred', 'fred@muscafit.local', password2);
 
 // Get Duncan's user ID
 const duncan = db.prepare('SELECT id FROM users WHERE email = ?').get('duncan@muscafit.local') as { id: number };
@@ -116,7 +116,7 @@ const users = db.prepare('SELECT id, name, email FROM users').all();
 users.forEach((u: any) => console.log(`  ${u.id}: ${u.name} (${u.email})`));
 console.log('');
 console.log('Login credentials:');
-console.log('  Duncan:           duncan@muscafit.local / duncan123');
-console.log('  Training Partner: partner@muscafit.local / partner123');
+console.log('  Duncan: duncan@muscafit.local / duncan123');
+console.log('  Fred:   fred@muscafit.local / fred123');
 
 db.close();

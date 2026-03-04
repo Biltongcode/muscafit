@@ -73,6 +73,18 @@ db.exec(`
     body TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE TABLE IF NOT EXISTS user_settings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL UNIQUE REFERENCES users(id),
+    notifications_enabled BOOLEAN DEFAULT 1,
+    evening_reminder_enabled BOOLEAN DEFAULT 1,
+    evening_reminder_hour INTEGER DEFAULT 20,
+    morning_summary_enabled BOOLEAN DEFAULT 1,
+    morning_summary_hour INTEGER DEFAULT 7,
+    notification_email TEXT,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 export default db;

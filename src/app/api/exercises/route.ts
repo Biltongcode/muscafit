@@ -3,16 +3,39 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import db from '@/lib/db';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const includeInactive = req.nextUrl.searchParams.get('all') === '1';
+  const browseUserId = req.nextUrl.searchParams.get('user_id');
+
+  if (browseUserId) {
+    // Viewing another user's active exercises (read-only)
+    const user = db
+      .prepare('SELECT id, name FROM users WHERE id = ?')
+      .get(Number(browseUserId)) as { id: number; name: string } | undefined;
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    const exercises = db
+      .prepare(
+        `SELECT id, name, target_type, target_value, target_sets, target_per_set, notes, sort_order, is_active
+         FROM exercises WHERE user_id = ? AND is_active = 1 ORDER BY sort_order`
+      )
+      .all(Number(browseUserId));
+
+    return NextResponse.json({ exercises, userName: user.name });
+  }
+
   const exercises = db
     .prepare(
       `SELECT id, name, target_type, target_value, target_sets, target_per_set, notes, sort_order, is_active
-       FROM exercises WHERE user_id = ? AND is_active = 1 ORDER BY sort_order`
+       FROM exercises WHERE user_id = ? ${includeInactive ? '' : 'AND is_active = 1'} ORDER BY sort_order`
     )
     .all(Number(session.user.id));
 

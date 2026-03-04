@@ -1,0 +1,83 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import db from '@/lib/db';
+
+export async function GET(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const date = req.nextUrl.searchParams.get('date');
+  if (!date) {
+    return NextResponse.json({ error: 'date parameter required' }, { status: 400 });
+  }
+
+  const targetUserId = req.nextUrl.searchParams.get('target_user_id');
+
+  let comments;
+  if (targetUserId) {
+    comments = db
+      .prepare(
+        `SELECT c.id, c.author_id as authorId, c.target_user_id as targetUserId,
+                c.comment_date as commentDate, c.body, c.created_at as createdAt,
+                u.name as authorName
+         FROM comments c
+         JOIN users u ON u.id = c.author_id
+         WHERE c.comment_date = ? AND c.target_user_id = ?
+         ORDER BY c.created_at ASC`
+      )
+      .all(date, Number(targetUserId));
+  } else {
+    comments = db
+      .prepare(
+        `SELECT c.id, c.author_id as authorId, c.target_user_id as targetUserId,
+                c.comment_date as commentDate, c.body, c.created_at as createdAt,
+                u.name as authorName
+         FROM comments c
+         JOIN users u ON u.id = c.author_id
+         WHERE c.comment_date = ?
+         ORDER BY c.created_at ASC`
+      )
+      .all(date);
+  }
+
+  return NextResponse.json({ comments });
+}
+
+export async function POST(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const body = await req.json();
+  const { targetUserId, date, comment } = body;
+
+  if (!targetUserId || !date || !comment?.trim()) {
+    return NextResponse.json({ error: 'targetUserId, date, and comment are required' }, { status: 400 });
+  }
+
+  const authorId = Number(session.user.id);
+
+  const result = db
+    .prepare(
+      `INSERT INTO comments (author_id, target_user_id, comment_date, body)
+       VALUES (?, ?, ?, ?)`
+    )
+    .run(authorId, targetUserId, date, comment.trim());
+
+  const created = db
+    .prepare(
+      `SELECT c.id, c.author_id as authorId, c.target_user_id as targetUserId,
+              c.comment_date as commentDate, c.body, c.created_at as createdAt,
+              u.name as authorName
+       FROM comments c
+       JOIN users u ON u.id = c.author_id
+       WHERE c.id = ?`
+    )
+    .get(result.lastInsertRowid);
+
+  return NextResponse.json({ comment: created }, { status: 201 });
+}

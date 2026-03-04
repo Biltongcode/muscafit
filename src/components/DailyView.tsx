@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { signOut } from 'next-auth/react';
+import { useSearchParams } from 'next/navigation';
+import NavBar from './NavBar';
+
+// --- Types ---
 
 interface Exercise {
   logId: number;
@@ -25,10 +28,40 @@ interface UserData {
   exercises: Exercise[];
 }
 
+interface Activity {
+  id: number;
+  userId: number;
+  activityType: string;
+  durationMinutes: number | null;
+  distanceKm: number | null;
+  notes: string | null;
+  sessionDate: string;
+}
+
+interface Comment {
+  id: number;
+  authorId: number;
+  targetUserId: number;
+  commentDate: string;
+  body: string;
+  createdAt: string;
+  authorName: string;
+}
+
 interface DailyViewProps {
   currentUserId: number;
   currentUserName: string;
 }
+
+// --- Helpers ---
+
+const ACTIVITY_TYPES = [
+  { key: 'squash', label: 'Squash' },
+  { key: 'run', label: 'Run' },
+  { key: 'walk', label: 'Walk' },
+  { key: 'gym', label: 'Gym' },
+  { key: 'cycle', label: 'Cycle' },
+] as const;
 
 function formatTarget(ex: Exercise): string {
   switch (ex.targetType) {
@@ -65,29 +98,93 @@ function getTodayStr(): string {
   return `${y}-${m}-${d}`;
 }
 
+// --- Activity Icons (inline SVG) ---
+
+function ActivityIcon({ type, className }: { type: string; className?: string }) {
+  const cls = className || 'w-5 h-5';
+  switch (type) {
+    case 'squash':
+      return (
+        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+          <circle cx="16" cy="6" r="3" />
+          <path strokeLinecap="round" d="M5 19c1-3 3-5 6-6M11 13l5-5M3 21l3-3" />
+        </svg>
+      );
+    case 'run':
+      return (
+        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+          <circle cx="13" cy="4" r="2" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M7 21l3-7 3 2 4-6M16 11l2-3M10 14l-3 1" />
+        </svg>
+      );
+    case 'walk':
+      return (
+        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+          <circle cx="12" cy="4" r="2" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 21l2-7M15 21l-2-7M13 14l1-4-3-1-1 4" />
+        </svg>
+      );
+    case 'gym':
+      return (
+        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round">
+          <path d="M4 12h16M6 8v8M18 8v8M3 10v4M21 10v4M9 10v4M15 10v4" />
+        </svg>
+      );
+    case 'cycle':
+      return (
+        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+          <circle cx="6" cy="16" r="4" />
+          <circle cx="18" cy="16" r="4" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 16l5-8h4l3 8M11 8l2 8" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
+// --- Main Component ---
+
 export default function DailyView({ currentUserId, currentUserName }: DailyViewProps) {
-  const [date, setDate] = useState(getTodayStr);
+  const searchParams = useSearchParams();
+  const initialDate = searchParams.get('date') || getTodayStr();
+  const [date, setDate] = useState(initialDate);
   const [users, setUsers] = useState<UserData[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedLog, setExpandedLog] = useState<number | null>(null);
+  const [activityModal, setActivityModal] = useState<{
+    userId: number;
+    type: string;
+    existing: Activity | null;
+  } | null>(null);
 
   const isToday = date === getTodayStr();
 
-  const fetchLogs = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/logs?date=${date}`);
-      const data = await res.json();
-      setUsers(data.users);
+      const [logsRes, activitiesRes, commentsRes] = await Promise.all([
+        fetch(`/api/logs?date=${date}`),
+        fetch(`/api/activities?date=${date}`),
+        fetch(`/api/comments?date=${date}`),
+      ]);
+      const logsData = await logsRes.json();
+      const activitiesData = await activitiesRes.json();
+      const commentsData = await commentsRes.json();
+      setUsers(logsData.users);
+      setActivities(activitiesData.activities);
+      setComments(commentsData.comments);
     } catch (err) {
-      console.error('Failed to fetch logs:', err);
+      console.error('Failed to fetch data:', err);
     }
     setLoading(false);
   }, [date]);
 
   useEffect(() => {
-    fetchLogs();
-  }, [fetchLogs]);
+    fetchData();
+  }, [fetchData]);
 
   const changeDate = (delta: number) => {
     const d = new Date(date + 'T12:00:00');
@@ -97,12 +194,12 @@ export default function DailyView({ currentUserId, currentUserName }: DailyViewP
     const day = String(d.getDate()).padStart(2, '0');
     setDate(`${y}-${m}-${day}`);
     setExpandedLog(null);
+    setActivityModal(null);
   };
 
   const toggleExercise = async (userId: number, logId: number, exerciseId: number, currentCompleted: boolean) => {
     if (userId !== currentUserId) return;
 
-    // Optimistic update
     setUsers((prev) =>
       prev.map((u) => {
         if (u.id !== userId) return u;
@@ -124,14 +221,10 @@ export default function DailyView({ currentUserId, currentUserName }: DailyViewP
       await fetch('/api/logs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          exerciseId,
-          date,
-          completed: !currentCompleted,
-        }),
+        body: JSON.stringify({ exerciseId, date, completed: !currentCompleted }),
       });
     } catch {
-      fetchLogs();
+      fetchData();
     }
   };
 
@@ -143,7 +236,6 @@ export default function DailyView({ currentUserId, currentUserName }: DailyViewP
         body: JSON.stringify({ actualValue, actualSets, notes }),
       });
 
-      // Update local state
       setUsers((prev) =>
         prev.map((u) => ({
           ...u,
@@ -159,7 +251,84 @@ export default function DailyView({ currentUserId, currentUserName }: DailyViewP
     setExpandedLog(null);
   };
 
-  // Sort: put current user first
+  // --- Activity handlers ---
+
+  const handleActivityClick = (userId: number, type: string) => {
+    const existing = activities.find((a) => a.userId === userId && a.activityType === type);
+    if (userId === currentUserId) {
+      setActivityModal({ userId, type, existing: existing ?? null });
+    }
+  };
+
+  const saveActivity = async (durationMinutes: number | null, notes: string | null) => {
+    if (!activityModal) return;
+    const { type, existing } = activityModal;
+
+    try {
+      if (existing) {
+        await fetch(`/api/activities/${existing.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ durationMinutes, notes }),
+        });
+      } else {
+        await fetch('/api/activities', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ date, activityType: type, durationMinutes, notes }),
+        });
+      }
+      await fetchData();
+    } catch (err) {
+      console.error('Failed to save activity:', err);
+    }
+    setActivityModal(null);
+  };
+
+  const deleteActivity = async () => {
+    if (!activityModal?.existing) return;
+    try {
+      await fetch(`/api/activities/${activityModal.existing.id}`, { method: 'DELETE' });
+      await fetchData();
+    } catch (err) {
+      console.error('Failed to delete activity:', err);
+    }
+    setActivityModal(null);
+  };
+
+  // --- Comment handler ---
+
+  const postComment = async (targetUserId: number, body: string) => {
+    // Optimistic update
+    const tempComment: Comment = {
+      id: Date.now(),
+      authorId: currentUserId,
+      targetUserId,
+      commentDate: date,
+      body,
+      createdAt: new Date().toISOString(),
+      authorName: currentUserName,
+    };
+    setComments((prev) => [...prev, tempComment]);
+
+    try {
+      const res = await fetch('/api/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetUserId, date, comment: body }),
+      });
+      const data = await res.json();
+      // Replace temp comment with real one
+      setComments((prev) =>
+        prev.map((c) => (c.id === tempComment.id ? data.comment : c))
+      );
+    } catch {
+      // Remove temp comment on error
+      setComments((prev) => prev.filter((c) => c.id !== tempComment.id));
+    }
+  };
+
+  // Sort: current user first
   const sortedUsers = [...users].sort((a, b) => {
     if (a.id === currentUserId) return -1;
     if (b.id === currentUserId) return 1;
@@ -168,21 +337,7 @@ export default function DailyView({ currentUserId, currentUserName }: DailyViewP
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <h1 className="text-lg font-bold text-gray-900">Muscafit</h1>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-600">{currentUserName}</span>
-            <button
-              onClick={() => signOut()}
-              className="text-sm text-gray-500 hover:text-gray-700"
-            >
-              Sign out
-            </button>
-          </div>
-        </div>
-      </header>
+      <NavBar currentUserName={currentUserName} active="daily" />
 
       {/* Date Navigation */}
       <div className="max-w-5xl mx-auto px-4 py-4">
@@ -213,7 +368,7 @@ export default function DailyView({ currentUserId, currentUserName }: DailyViewP
           </button>
           {!isToday && (
             <button
-              onClick={() => { setDate(getTodayStr()); setExpandedLog(null); }}
+              onClick={() => { setDate(getTodayStr()); setExpandedLog(null); setActivityModal(null); }}
               className="ml-2 px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-full hover:bg-blue-100"
             >
               Today
@@ -229,6 +384,8 @@ export default function DailyView({ currentUserId, currentUserName }: DailyViewP
               const completed = user.exercises.filter((e) => e.completed).length;
               const total = user.exercises.length;
               const isOwn = user.id === currentUserId;
+              const userActivities = activities.filter((a) => a.userId === user.id);
+              const userComments = comments.filter((c) => c.targetUserId === user.id);
 
               return (
                 <div key={user.id} className="bg-white rounded-lg shadow">
@@ -273,11 +430,172 @@ export default function DailyView({ currentUserId, currentUserName }: DailyViewP
                       ))
                     )}
                   </div>
+
+                  {/* Activity Bar — always show for own column, only show for others if they have activities */}
+                  {(isOwn || userActivities.length > 0) && (
+                    <ActivityBar
+                      userId={user.id}
+                      isOwn={isOwn}
+                      userActivities={userActivities}
+                      onActivityClick={(type) => handleActivityClick(user.id, type)}
+                    />
+                  )}
+
+                  {/* Comments */}
+                  <CommentSection
+                    comments={userComments}
+                    onPost={(body) => postComment(user.id, body)}
+                  />
                 </div>
               );
             })}
           </div>
         )}
+      </div>
+
+      {/* Activity Modal */}
+      {activityModal && (
+        <ActivityModal
+          type={activityModal.type}
+          existing={activityModal.existing}
+          onSave={saveActivity}
+          onDelete={activityModal.existing ? deleteActivity : undefined}
+          onClose={() => setActivityModal(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// --- Activity Bar ---
+
+function ActivityBar({
+  userId,
+  isOwn,
+  userActivities,
+  onActivityClick,
+}: {
+  userId: number;
+  isOwn: boolean;
+  userActivities: Activity[];
+  onActivityClick: (type: string) => void;
+}) {
+  return (
+    <div className="px-4 py-3 border-t bg-gray-50/50">
+      <div className="flex items-center justify-around">
+        {ACTIVITY_TYPES.map(({ key, label }) => {
+          const activity = userActivities.find((a) => a.activityType === key);
+          const isLogged = !!activity;
+
+          return (
+            <button
+              key={key}
+              onClick={() => onActivityClick(key)}
+              disabled={!isOwn}
+              className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg transition-all ${
+                isOwn ? 'cursor-pointer hover:bg-gray-100' : 'cursor-default'
+              } ${isLogged ? 'text-blue-600' : 'text-gray-400'}`}
+              title={label}
+            >
+              <div
+                className={`p-1.5 rounded-full transition-colors ${
+                  isLogged ? 'bg-blue-100' : ''
+                }`}
+              >
+                <ActivityIcon type={key} className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] font-medium leading-none">
+                {isLogged && activity.durationMinutes
+                  ? `${activity.durationMinutes}m`
+                  : label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// --- Activity Modal ---
+
+function ActivityModal({
+  type,
+  existing,
+  onSave,
+  onDelete,
+  onClose,
+}: {
+  type: string;
+  existing: Activity | null;
+  onSave: (durationMinutes: number | null, notes: string | null) => void;
+  onDelete?: () => void;
+  onClose: () => void;
+}) {
+  const [duration, setDuration] = useState(existing?.durationMinutes?.toString() ?? '');
+  const [notes, setNotes] = useState(existing?.notes ?? '');
+
+  const label = ACTIVITY_TYPES.find((a) => a.key === type)?.label ?? type;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
+      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-xs p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="p-1.5 bg-blue-100 rounded-full text-blue-600">
+            <ActivityIcon type={type} className="w-5 h-5" />
+          </div>
+          <h3 className="font-semibold text-gray-900">
+            {existing ? `Edit ${label}` : `Log ${label}`}
+          </h3>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">Duration (minutes)</label>
+            <input
+              type="number"
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              placeholder="e.g. 45"
+              autoFocus
+              className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">Notes (optional)</label>
+            <input
+              type="text"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="e.g. easy pace"
+              className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-2 mt-4">
+          <button
+            onClick={() => onSave(duration ? Number(duration) : null, notes || null)}
+            className="flex-1 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700"
+          >
+            {existing ? 'Update' : 'Save'}
+          </button>
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              className="px-3 py-2 text-red-600 text-sm font-medium rounded-md border border-red-200 hover:bg-red-50"
+            >
+              Remove
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className="px-3 py-2 text-gray-600 text-sm rounded-md border hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -299,7 +617,6 @@ function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave }
   const [editSets, setEditSets] = useState<string>(exercise.actualSets?.toString() ?? '');
   const [editNotes, setEditNotes] = useState<string>(exercise.logNotes ?? '');
 
-  // Sync when exercise prop changes
   useEffect(() => {
     setEditValue(exercise.actualValue?.toString() ?? '');
     setEditSets(exercise.actualSets?.toString() ?? '');
@@ -311,7 +628,6 @@ function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave }
   return (
     <div className={`transition-colors ${exercise.completed ? 'bg-green-50' : ''}`}>
       <div className="px-4 py-3 flex items-center gap-3">
-        {/* Checkbox */}
         <button
           onClick={isOwn ? onToggle : undefined}
           disabled={!isOwn}
@@ -331,7 +647,6 @@ function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave }
           )}
         </button>
 
-        {/* Exercise info */}
         <div className="flex-1 min-w-0">
           <div className={`text-sm font-medium ${exercise.completed ? 'text-green-800' : 'text-gray-900'}`}>
             {exercise.name}
@@ -346,7 +661,6 @@ function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave }
           </div>
         </div>
 
-        {/* Edit button (own exercises only) */}
         {isOwn && (
           <button
             onClick={onExpand}
@@ -362,7 +676,6 @@ function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave }
         )}
       </div>
 
-      {/* Expanded edit form */}
       {isExpanded && isOwn && (
         <div className="px-4 pb-3 pt-1 bg-gray-50 border-t border-gray-100">
           <div className="flex flex-wrap gap-3 items-end">
@@ -418,6 +731,65 @@ function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave }
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// --- Comment Section ---
+
+function CommentSection({
+  comments,
+  onPost,
+}: {
+  comments: Comment[];
+  onPost: (body: string) => void;
+}) {
+  const [text, setText] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!text.trim()) return;
+    onPost(text.trim());
+    setText('');
+  };
+
+  return (
+    <div className="px-4 py-3 border-t">
+      {/* Existing comments */}
+      {comments.length > 0 && (
+        <div className="space-y-2 mb-3">
+          {comments.map((c) => (
+            <div key={c.id} className="text-xs">
+              <span className="font-medium text-gray-700">{c.authorName}</span>
+              <span className="text-gray-400 ml-1">
+                {new Date(c.createdAt).toLocaleTimeString('en-GB', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </span>
+              <p className="text-gray-600 mt-0.5">{c.body}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Input */}
+      <form onSubmit={handleSubmit} className="flex gap-2">
+        <input
+          type="text"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Leave a comment..."
+          className="flex-1 px-2 py-1.5 text-xs border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+        <button
+          type="submit"
+          disabled={!text.trim()}
+          className="px-2.5 py-1.5 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Send
+        </button>
+      </form>
     </div>
   );
 }
