@@ -259,16 +259,16 @@ export default function ExerciseManager({ currentUserId, currentUserName }: Exer
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors">
       <NavBar currentUserName={currentUserName} />
 
       <div className="max-w-2xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-900">My Exercises</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">My Exercises</h2>
           {!adding && (
             <button
               onClick={startAdd}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-4 py-2.5 text-sm font-medium gradient-btn rounded-lg transition-colors"
             >
               + Add Exercise
             </button>
@@ -276,7 +276,7 @@ export default function ExerciseManager({ currentUserId, currentUserName }: Exer
         </div>
 
         {loading ? (
-          <div className="text-center py-12 text-gray-400">Loading...</div>
+          <div className="text-center py-12 text-gray-400 dark:text-slate-500">Loading...</div>
         ) : (
           <div className="space-y-2">
             {exercises.map((ex, index) => {
@@ -300,17 +300,17 @@ export default function ExerciseManager({ currentUserId, currentUserName }: Exer
               return (
                 <div
                   key={ex.id}
-                  className={`bg-white rounded-lg shadow-sm border transition-opacity ${
+                  className={`glass rounded-xl shadow-sm transition-opacity ${
                     !ex.is_active ? 'opacity-50' : ''
                   }`}
                 >
-                  <div className="px-4 py-3 flex items-center gap-3">
+                  <div className="px-4 py-4 flex items-center gap-3">
                     {/* Reorder buttons */}
-                    <div className="flex flex-col gap-0.5">
+                    <div className="flex flex-col gap-1">
                       <button
                         onClick={() => moveExercise(index, -1)}
                         disabled={index === 0}
-                        className="p-0.5 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="p-2 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700/50 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         aria-label="Move up"
                       >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -320,7 +320,7 @@ export default function ExerciseManager({ currentUserId, currentUserName }: Exer
                       <button
                         onClick={() => moveExercise(index, 1)}
                         disabled={index === exercises.length - 1}
-                        className="p-0.5 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="p-2 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700/50 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         aria-label="Move down"
                       >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -331,25 +331,25 @@ export default function ExerciseManager({ currentUserId, currentUserName }: Exer
 
                     {/* Exercise info */}
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-900">{ex.name}</div>
-                      <div className="text-sm text-gray-500">{formatTarget(ex)}</div>
+                      <div className="font-medium text-gray-900 dark:text-slate-100">{ex.name}</div>
+                      <div className="text-sm text-gray-500 dark:text-slate-400">{formatTarget(ex)}</div>
                     </div>
 
                     {/* Actions */}
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => toggleActive(ex)}
-                        className={`px-2.5 py-1 text-xs font-medium rounded-full transition-colors ${
+                        className={`px-3 py-2 text-xs font-medium rounded-full transition-colors touch-target flex items-center ${
                           ex.is_active
-                            ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                            ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-500/15 dark:text-green-400 dark:hover:bg-green-500/25'
+                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-slate-700/50 dark:text-slate-400 dark:hover:bg-slate-700'
                         }`}
                       >
                         {ex.is_active ? 'Active' : 'Inactive'}
                       </button>
                       <button
                         onClick={() => startEdit(ex)}
-                        className="p-1.5 text-gray-400 hover:text-gray-600 rounded hover:bg-gray-100"
+                        className="p-2.5 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700/50 transition-colors touch-target flex items-center justify-center"
                         aria-label="Edit exercise"
                       >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -376,11 +376,11 @@ export default function ExerciseManager({ currentUserId, currentUserName }: Exer
             )}
 
             {exercises.length === 0 && !adding && (
-              <div className="text-center py-12 text-gray-400">
+              <div className="text-center py-12 text-gray-400 dark:text-slate-500">
                 <p>No exercises yet.</p>
                 <button
                   onClick={startAdd}
-                  className="mt-2 text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  className="mt-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium"
                 >
                   Add your first exercise
                 </button>
@@ -389,7 +389,7 @@ export default function ExerciseManager({ currentUserId, currentUserName }: Exer
           </div>
         )}
 
-        <p className="mt-6 text-xs text-gray-400 text-center">
+        <p className="mt-6 text-xs text-gray-400 dark:text-slate-500 text-center">
           Deactivating an exercise hides it from future daily views but keeps your historical logs.
         </p>
 
@@ -397,14 +397,14 @@ export default function ExerciseManager({ currentUserId, currentUserName }: Exer
         {otherUsers.length > 0 && (
           <div className="mt-10">
             <div className="flex items-center gap-3 mb-4">
-              <h2 className="text-lg font-bold text-gray-900">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100">
                 {browseUserName ? `${browseUserName}'s Exercises` : 'Browse Exercises'}
               </h2>
               {otherUsers.length > 1 && (
                 <select
                   value={browseUserId ?? ''}
                   onChange={(e) => setBrowseUserId(e.target.value ? Number(e.target.value) : null)}
-                  className="px-3 py-1.5 border rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Select a user...</option>
                   {otherUsers.map((u) => (
@@ -415,25 +415,25 @@ export default function ExerciseManager({ currentUserId, currentUserName }: Exer
             </div>
 
             {browseLoading ? (
-              <div className="text-center py-8 text-gray-400">Loading...</div>
+              <div className="text-center py-8 text-gray-400 dark:text-slate-500">Loading...</div>
             ) : browseExercises.length > 0 ? (
               <div className="space-y-2">
                 {browseExercises.map((ex) => {
                   const isCopied = copiedIds.has(ex.id);
                   return (
-                    <div key={ex.id} className="bg-white rounded-lg shadow-sm border">
-                      <div className="px-4 py-3 flex items-center gap-3">
+                    <div key={ex.id} className="glass rounded-xl shadow-sm">
+                      <div className="px-4 py-4 flex items-center gap-3">
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium text-gray-900">{ex.name}</div>
-                          <div className="text-sm text-gray-500">{formatTarget(ex)}</div>
+                          <div className="font-medium text-gray-900 dark:text-slate-100">{ex.name}</div>
+                          <div className="text-sm text-gray-500 dark:text-slate-400">{formatTarget(ex)}</div>
                         </div>
                         <button
                           onClick={() => copyExercise(ex)}
                           disabled={isCopied}
-                          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                          className={`px-4 py-2.5 text-xs font-medium rounded-lg transition-colors touch-target flex items-center ${
                             isCopied
-                              ? 'bg-green-100 text-green-700 cursor-default'
-                              : 'bg-blue-600 text-white hover:bg-blue-700'
+                              ? 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400 cursor-default'
+                              : 'gradient-btn'
                           }`}
                         >
                           {isCopied ? 'Added' : '+ Add to mine'}
@@ -444,7 +444,7 @@ export default function ExerciseManager({ currentUserId, currentUserName }: Exer
                 })}
               </div>
             ) : browseUserId ? (
-              <div className="text-center py-8 text-gray-400 text-sm">
+              <div className="text-center py-8 text-gray-400 dark:text-slate-500 text-sm">
                 No exercises configured yet.
               </div>
             ) : null}
@@ -475,29 +475,29 @@ function ExerciseForm({
   title: string;
 }) {
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-blue-200 overflow-hidden">
-      <div className="px-4 py-2.5 bg-blue-50 border-b border-blue-200">
-        <h3 className="font-semibold text-sm text-blue-900">{title}</h3>
+    <div className="glass rounded-xl shadow-sm border-blue-200 dark:border-blue-500/30 overflow-hidden">
+      <div className="px-4 py-2.5 bg-blue-50 dark:bg-blue-500/10 border-b border-blue-200 dark:border-blue-500/30">
+        <h3 className="font-semibold text-sm text-blue-900 dark:text-blue-300">{title}</h3>
       </div>
       <div className="px-4 py-4 space-y-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Name</label>
           <input
             type="text"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             placeholder="e.g. Press ups"
             autoFocus
-            className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:placeholder-slate-500"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Type</label>
           <select
             value={form.targetType}
             onChange={(e) => setForm({ ...form, targetType: e.target.value })}
-            className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             {TARGET_TYPES.map((t) => (
               <option key={t.value} value={t.value}>
@@ -507,9 +507,9 @@ function ExerciseForm({
           </select>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
               {form.targetType.startsWith('timed') ? 'Seconds' : 'Total Reps'}
             </label>
             <input
@@ -517,30 +517,30 @@ function ExerciseForm({
               value={form.targetValue}
               onChange={(e) => setForm({ ...form, targetValue: e.target.value })}
               placeholder="e.g. 125"
-              className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:placeholder-slate-500"
             />
           </div>
 
           {showSets && (
             <>
               <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Sets</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Sets</label>
                 <input
                   type="number"
                   value={form.targetSets}
                   onChange={(e) => setForm({ ...form, targetSets: e.target.value })}
                   placeholder="e.g. 5"
-                  className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:placeholder-slate-500"
                 />
               </div>
               <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Per Set</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Per Set</label>
                 <input
                   type="number"
                   value={form.targetPerSet}
                   onChange={(e) => setForm({ ...form, targetPerSet: e.target.value })}
                   placeholder="e.g. 25"
-                  className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:placeholder-slate-500"
                 />
               </div>
             </>
@@ -548,13 +548,13 @@ function ExerciseForm({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Notes (optional)</label>
           <input
             type="text"
             value={form.notes}
             onChange={(e) => setForm({ ...form, notes: e.target.value })}
             placeholder="e.g. each side"
-            className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:placeholder-slate-500"
           />
         </div>
 
@@ -562,13 +562,13 @@ function ExerciseForm({
           <button
             onClick={onSave}
             disabled={saving || !form.name.trim()}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2.5 text-sm font-medium gradient-btn rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? 'Saving...' : 'Save'}
           </button>
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-sm text-gray-600 rounded-md border hover:bg-gray-50"
+            className="px-4 py-2.5 text-sm text-gray-600 dark:text-slate-400 rounded-lg border border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors"
           >
             Cancel
           </button>

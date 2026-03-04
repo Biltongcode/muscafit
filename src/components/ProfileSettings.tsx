@@ -57,42 +57,42 @@ export default function ProfileSettings({ currentUserName }: ProfileSettingsProp
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors">
       <NavBar currentUserName={currentUserName} />
 
       <div className="max-w-lg mx-auto px-4 py-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Profile</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-6">Profile</h2>
 
         {loading ? (
-          <div className="text-center py-12 text-gray-400">Loading...</div>
+          <div className="text-center py-12 text-gray-400 dark:text-slate-500">Loading...</div>
         ) : (
-          <form onSubmit={handleSave} className="bg-white rounded-lg shadow-sm border p-6 space-y-4">
+          <form onSubmit={handleSave} className="glass rounded-xl shadow-sm p-6 space-y-4 animate-fade-in">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Display Name</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Display Name</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             {message && (
               <div
-                className={`text-sm px-3 py-2 rounded-md ${
+                className={`text-sm px-3 py-2.5 rounded-lg ${
                   message.type === 'success'
-                    ? 'bg-green-50 text-green-700'
-                    : 'bg-red-50 text-red-700'
+                    ? 'bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400'
+                    : 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400'
                 }`}
               >
                 {message.text}
@@ -102,7 +102,7 @@ export default function ProfileSettings({ currentUserName }: ProfileSettingsProp
             <button
               type="submit"
               disabled={saving || !name.trim() || !email.trim()}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2.5 text-sm font-medium gradient-btn rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? 'Saving...' : 'Save Changes'}
             </button>

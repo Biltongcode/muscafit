@@ -22,7 +22,8 @@ export async function GET(req: NextRequest) {
       .prepare(
         `SELECT c.id, c.author_id as authorId, c.target_user_id as targetUserId,
                 c.comment_date as commentDate, c.body, c.created_at as createdAt,
-                u.name as authorName
+                u.name as authorName,
+                u.avatar_url as authorAvatarUrl
          FROM comments c
          JOIN users u ON u.id = c.author_id
          WHERE c.comment_date = ? AND c.target_user_id = ?
@@ -34,7 +35,8 @@ export async function GET(req: NextRequest) {
       .prepare(
         `SELECT c.id, c.author_id as authorId, c.target_user_id as targetUserId,
                 c.comment_date as commentDate, c.body, c.created_at as createdAt,
-                u.name as authorName
+                u.name as authorName,
+                u.avatar_url as authorAvatarUrl
          FROM comments c
          JOIN users u ON u.id = c.author_id
          WHERE c.comment_date = ?

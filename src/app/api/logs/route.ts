@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   }
 
   // Get all users
-  const allUsers = db.prepare('SELECT id, name FROM users').all() as Array<{ id: number; name: string }>;
+  const allUsers = db.prepare('SELECT id, name, avatar_url FROM users').all() as Array<{ id: number; name: string; avatar_url: string | null }>;
 
   // For each user, auto-generate log entries for active exercises that don't have one
   const insertLog = db.prepare(
@@ -80,6 +80,7 @@ export async function GET(req: NextRequest) {
   const users = allUsers.map((user) => ({
     id: user.id,
     name: user.name,
+    avatarUrl: user.avatar_url,
     exercises: allLogs
       .filter((log) => log.user_id === user.id)
       .map((log) => ({

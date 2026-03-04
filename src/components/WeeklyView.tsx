@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { signOut } from 'next-auth/react';
 import NavBar from './NavBar';
+import Avatar from './Avatar';
 
 interface DayStats {
   completed: number;
@@ -14,6 +14,7 @@ interface DayStats {
 interface UserWeek {
   id: number;
   name: string;
+  avatarUrl?: string | null;
   days: Record<string, DayStats>;
 }
 
@@ -133,7 +134,7 @@ export default function WeeklyView({ currentUserId, currentUserName }: WeeklyVie
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors">
       <NavBar currentUserName={currentUserName} active="weekly" />
 
       <div className="max-w-5xl mx-auto px-4 py-4">
@@ -141,7 +142,7 @@ export default function WeeklyView({ currentUserId, currentUserName }: WeeklyVie
         <div className="flex items-center justify-center gap-4 mb-6">
           <button
             onClick={() => changeWeek(-1)}
-            className="p-2 rounded-md hover:bg-gray-200 text-gray-600"
+            className="p-3 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-800 text-gray-600 dark:text-slate-400 transition-colors touch-target flex items-center justify-center"
             aria-label="Previous week"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -149,14 +150,14 @@ export default function WeeklyView({ currentUserId, currentUserName }: WeeklyVie
             </svg>
           </button>
           <div className="text-center">
-            <h2 className="text-lg font-semibold text-gray-900">{formatWeekRange(monday)}</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{formatWeekRange(monday)}</h2>
             {isCurrentWeek && (
-              <span className="text-xs font-medium text-blue-600">This week</span>
+              <span className="text-xs font-medium text-blue-600 dark:text-blue-400">This week</span>
             )}
           </div>
           <button
             onClick={() => changeWeek(1)}
-            className="p-2 rounded-md hover:bg-gray-200 text-gray-600"
+            className="p-3 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-800 text-gray-600 dark:text-slate-400 transition-colors touch-target flex items-center justify-center"
             aria-label="Next week"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -166,7 +167,7 @@ export default function WeeklyView({ currentUserId, currentUserName }: WeeklyVie
           {!isCurrentWeek && (
             <button
               onClick={() => setMonday(getMonday(new Date()))}
-              className="ml-2 px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-full hover:bg-blue-100"
+              className="ml-2 px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 rounded-full hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors"
             >
               This week
             </button>
@@ -174,86 +175,95 @@ export default function WeeklyView({ currentUserId, currentUserName }: WeeklyVie
         </div>
 
         {loading ? (
-          <div className="text-center py-12 text-gray-400">Loading...</div>
+          <div className="text-center py-12 text-gray-400 dark:text-slate-500">Loading...</div>
         ) : (
           <div className="space-y-4">
             {sortedUsers.map((user) => {
               const isOwn = user.id === currentUserId;
               return (
-                <div key={user.id} className="bg-white rounded-lg shadow overflow-hidden">
+                <div key={user.id} className="glass rounded-xl shadow-sm dark:shadow-glow/5 overflow-hidden animate-fade-in">
                   {/* User header */}
-                  <div className="px-4 py-2.5 border-b bg-gray-50/80">
-                    <h3 className="font-semibold text-sm text-gray-900">
-                      {user.name}
-                      {isOwn && <span className="text-xs text-gray-400 ml-1">(you)</span>}
-                    </h3>
+                  <div className="px-4 py-2.5 border-b border-gray-100 dark:border-slate-700/50 bg-gray-50/80 dark:bg-slate-800/40">
+                    <div className="flex items-center gap-2">
+                      <Avatar name={user.name} avatarUrl={user.avatarUrl} size="md" />
+                      <h3 className="font-semibold text-sm text-gray-900 dark:text-slate-100">
+                        {user.name}
+                        {isOwn && <span className="text-xs text-gray-400 dark:text-slate-500 ml-1">(you)</span>}
+                      </h3>
+                    </div>
                   </div>
 
-                  {/* Week grid */}
-                  <div className="overflow-x-auto">
-                    <div className="grid grid-cols-7 min-w-[420px]">
-                      {/* Day headers */}
-                      {weekDates.map((dateStr, i) => {
-                        const d = new Date(dateStr + 'T12:00:00');
-                        const dayNum = d.getDate();
-                        const isToday = dateStr === todayStr;
+                  {/* Week grid — scrollable on mobile */}
+                  <div className="relative">
+                    <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+                      <div className="grid grid-cols-7 min-w-[500px]">
+                        {/* Day headers */}
+                        {weekDates.map((dateStr, i) => {
+                          const d = new Date(dateStr + 'T12:00:00');
+                          const dayNum = d.getDate();
+                          const isToday = dateStr === todayStr;
 
-                        return (
-                          <div
-                            key={dateStr}
-                            className={`text-center py-1.5 border-b text-xs ${
-                              isToday ? 'bg-blue-50 font-semibold text-blue-700' : 'text-gray-500'
-                            }`}
-                          >
-                            <div>{DAY_LABELS[i]}</div>
-                            <div className="text-[10px]">{dayNum}</div>
-                          </div>
-                        );
-                      })}
+                          return (
+                            <div
+                              key={dateStr}
+                              className={`text-center py-2 border-b border-gray-100 dark:border-slate-700/50 ${
+                                isToday
+                                  ? 'bg-blue-50 dark:bg-blue-500/10 font-semibold text-blue-700 dark:text-blue-400'
+                                  : 'text-gray-500 dark:text-slate-400'
+                              }`}
+                            >
+                              <div className="text-sm">{DAY_LABELS[i]}</div>
+                              <div className="text-xs">{dayNum}</div>
+                            </div>
+                          );
+                        })}
 
-                      {/* Data cells */}
-                      {weekDates.map((dateStr) => {
-                        const stats = user.days[dateStr];
-                        const isToday = dateStr === todayStr;
-                        const hasData = stats && stats.total > 0;
-                        const allDone = hasData && stats.completed === stats.total;
-                        const partial = hasData && stats.completed > 0 && !allDone;
-                        const isFuture = dateStr > todayStr;
+                        {/* Data cells */}
+                        {weekDates.map((dateStr) => {
+                          const stats = user.days[dateStr];
+                          const isToday = dateStr === todayStr;
+                          const hasData = stats && stats.total > 0;
+                          const allDone = hasData && stats.completed === stats.total;
+                          const partial = hasData && stats.completed > 0 && !allDone;
+                          const isFuture = dateStr > todayStr;
 
-                        return (
-                          <button
-                            key={`cell-${dateStr}`}
-                            onClick={() => goToDay(dateStr)}
-                            className={`py-3 px-1 border-r last:border-r-0 transition-colors hover:bg-gray-50 ${
-                              isToday ? 'bg-blue-50/50' : ''
-                            }`}
-                          >
-                            {hasData ? (
-                              <div className="text-center">
-                                <span
-                                  className={`inline-block text-sm font-semibold px-1.5 py-0.5 rounded ${
-                                    allDone
-                                      ? 'text-green-700 bg-green-100'
-                                      : partial
-                                      ? 'text-amber-700 bg-amber-100'
-                                      : 'text-gray-500 bg-gray-100'
-                                  }`}
-                                >
-                                  {stats.completed}/{stats.total}
-                                </span>
-                                <ActivityDots activities={stats.activities} />
-                              </div>
-                            ) : (
-                              <div className="text-center">
-                                <span className="text-xs text-gray-300">
-                                  {isFuture ? '–' : '–'}
-                                </span>
-                              </div>
-                            )}
-                          </button>
-                        );
-                      })}
+                          return (
+                            <button
+                              key={`cell-${dateStr}`}
+                              onClick={() => goToDay(dateStr)}
+                              className={`py-4 px-1 border-r border-gray-100 dark:border-slate-700/50 last:border-r-0 transition-colors hover:bg-gray-50 dark:hover:bg-slate-700/30 ${
+                                isToday ? 'bg-blue-50/50 dark:bg-blue-500/5' : ''
+                              }`}
+                            >
+                              {hasData ? (
+                                <div className="text-center">
+                                  <span
+                                    className={`inline-block text-sm font-semibold px-1.5 py-0.5 rounded ${
+                                      allDone
+                                        ? 'text-green-700 bg-green-100 dark:text-green-400 dark:bg-green-500/15'
+                                        : partial
+                                        ? 'text-amber-700 bg-amber-100 dark:text-amber-400 dark:bg-amber-500/15'
+                                        : 'text-gray-500 bg-gray-100 dark:text-slate-400 dark:bg-slate-700/50'
+                                    }`}
+                                  >
+                                    {stats.completed}/{stats.total}
+                                  </span>
+                                  <ActivityDots activities={stats.activities} />
+                                </div>
+                              ) : (
+                                <div className="text-center">
+                                  <span className="text-xs text-gray-300 dark:text-slate-600">
+                                    {isFuture ? '–' : '–'}
+                                  </span>
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
+                    {/* Scroll fade indicator for mobile */}
+                    <div className="absolute top-0 right-0 bottom-0 w-6 bg-gradient-to-l from-white dark:from-slate-800/60 to-transparent pointer-events-none sm:hidden" />
                   </div>
                 </div>
               );

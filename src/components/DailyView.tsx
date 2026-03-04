@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import NavBar from './NavBar';
+import Avatar from './Avatar';
 
 // --- Types ---
 
@@ -25,6 +26,7 @@ interface Exercise {
 interface UserData {
   id: number;
   name: string;
+  avatarUrl?: string | null;
   exercises: Exercise[];
 }
 
@@ -46,11 +48,13 @@ interface Comment {
   body: string;
   createdAt: string;
   authorName: string;
+  authorAvatarUrl?: string | null;
 }
 
 interface DailyViewProps {
   currentUserId: number;
   currentUserName: string;
+  currentUserAvatar?: string | null;
 }
 
 // --- Helpers ---
@@ -145,7 +149,7 @@ function ActivityIcon({ type, className }: { type: string; className?: string })
 
 // --- Main Component ---
 
-export default function DailyView({ currentUserId, currentUserName }: DailyViewProps) {
+export default function DailyView({ currentUserId, currentUserName, currentUserAvatar }: DailyViewProps) {
   const searchParams = useSearchParams();
   const initialDate = searchParams.get('date') || getTodayStr();
   const [date, setDate] = useState(initialDate);
@@ -308,6 +312,7 @@ export default function DailyView({ currentUserId, currentUserName }: DailyViewP
       body,
       createdAt: new Date().toISOString(),
       authorName: currentUserName,
+      authorAvatarUrl: currentUserAvatar,
     };
     setComments((prev) => [...prev, tempComment]);
 
@@ -336,7 +341,7 @@ export default function DailyView({ currentUserId, currentUserName }: DailyViewP
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors">
       <NavBar currentUserName={currentUserName} active="daily" />
 
       {/* Date Navigation */}
@@ -344,7 +349,7 @@ export default function DailyView({ currentUserId, currentUserName }: DailyViewP
         <div className="flex items-center justify-center gap-4 mb-6">
           <button
             onClick={() => changeDate(-1)}
-            className="p-2 rounded-md hover:bg-gray-200 text-gray-600"
+            className="p-3 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-800 text-gray-600 dark:text-slate-400 transition-colors touch-target flex items-center justify-center"
             aria-label="Previous day"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -352,14 +357,14 @@ export default function DailyView({ currentUserId, currentUserName }: DailyViewP
             </svg>
           </button>
           <div className="text-center">
-            <h2 className="text-lg font-semibold text-gray-900">{formatDate(date)}</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{formatDate(date)}</h2>
             {isToday && (
-              <span className="text-xs font-medium text-blue-600">Today</span>
+              <span className="text-xs font-medium text-blue-600 dark:text-blue-400">Today</span>
             )}
           </div>
           <button
             onClick={() => changeDate(1)}
-            className="p-2 rounded-md hover:bg-gray-200 text-gray-600"
+            className="p-3 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-800 text-gray-600 dark:text-slate-400 transition-colors touch-target flex items-center justify-center"
             aria-label="Next day"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -369,7 +374,7 @@ export default function DailyView({ currentUserId, currentUserName }: DailyViewP
           {!isToday && (
             <button
               onClick={() => { setDate(getTodayStr()); setExpandedLog(null); setActivityModal(null); }}
-              className="ml-2 px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-full hover:bg-blue-100"
+              className="ml-2 px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 rounded-full hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors"
             >
               Today
             </button>
@@ -377,9 +382,9 @@ export default function DailyView({ currentUserId, currentUserName }: DailyViewP
         </div>
 
         {loading ? (
-          <div className="text-center py-12 text-gray-400">Loading...</div>
+          <div className="text-center py-12 text-gray-400 dark:text-slate-500">Loading...</div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {sortedUsers.map((user) => {
               const completed = user.exercises.filter((e) => e.completed).length;
               const total = user.exercises.length;
@@ -388,21 +393,24 @@ export default function DailyView({ currentUserId, currentUserName }: DailyViewP
               const userComments = comments.filter((c) => c.targetUserId === user.id);
 
               return (
-                <div key={user.id} className="bg-white rounded-lg shadow">
+                <div key={user.id} className="glass rounded-xl shadow-sm dark:shadow-glow/5 animate-fade-in">
                   {/* User header */}
-                  <div className="px-4 py-3 border-b flex items-center justify-between">
-                    <h3 className="font-semibold text-gray-900">
-                      {user.name}
-                      {isOwn && <span className="text-xs text-gray-400 ml-1">(you)</span>}
-                    </h3>
+                  <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-700/50 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <Avatar name={user.name} avatarUrl={user.avatarUrl} size="lg" />
+                      <h3 className="font-semibold text-gray-900 dark:text-slate-100">
+                        {user.name}
+                        {isOwn && <span className="text-xs text-gray-400 dark:text-slate-500 ml-1">(you)</span>}
+                      </h3>
+                    </div>
                     {total > 0 && (
                       <span
-                        className={`text-sm font-medium px-2 py-0.5 rounded-full ${
+                        className={`text-sm font-medium px-2.5 py-1 rounded-full ${
                           completed === total
-                            ? 'bg-green-100 text-green-700'
+                            ? 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400'
                             : completed > 0
-                            ? 'bg-amber-100 text-amber-700'
-                            : 'bg-gray-100 text-gray-500'
+                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400'
+                            : 'bg-gray-100 text-gray-500 dark:bg-slate-700/50 dark:text-slate-400'
                         }`}
                       >
                         {completed}/{total}
@@ -411,9 +419,9 @@ export default function DailyView({ currentUserId, currentUserName }: DailyViewP
                   </div>
 
                   {/* Exercise list */}
-                  <div className="divide-y">
+                  <div className="divide-y divide-gray-100 dark:divide-slate-700/50">
                     {user.exercises.length === 0 ? (
-                      <div className="px-4 py-6 text-center text-sm text-gray-400">
+                      <div className="px-4 py-6 text-center text-sm text-gray-400 dark:text-slate-500">
                         No exercises configured
                       </div>
                     ) : (
@@ -481,7 +489,7 @@ function ActivityBar({
   onActivityClick: (type: string) => void;
 }) {
   return (
-    <div className="px-4 py-3 border-t bg-gray-50/50">
+    <div className="px-4 py-3 border-t border-gray-100 dark:border-slate-700/50 bg-gray-50/50 dark:bg-slate-900/30">
       <div className="flex items-center justify-around">
         {ACTIVITY_TYPES.map(({ key, label }) => {
           const activity = userActivities.find((a) => a.activityType === key);
@@ -492,19 +500,19 @@ function ActivityBar({
               key={key}
               onClick={() => onActivityClick(key)}
               disabled={!isOwn}
-              className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg transition-all ${
-                isOwn ? 'cursor-pointer hover:bg-gray-100' : 'cursor-default'
-              } ${isLogged ? 'text-blue-600' : 'text-gray-400'}`}
+              className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
+                isOwn ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-700/50' : 'cursor-default'
+              } ${isLogged ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-slate-500'}`}
               title={label}
             >
               <div
                 className={`p-1.5 rounded-full transition-colors ${
-                  isLogged ? 'bg-blue-100' : ''
+                  isLogged ? 'bg-blue-100 dark:bg-blue-500/15' : ''
                 }`}
               >
                 <ActivityIcon type={key} className="w-5 h-5" />
               </div>
-              <span className="text-[10px] font-medium leading-none">
+              <span className="text-xs font-medium leading-none">
                 {isLogged && activity.durationMinutes
                   ? `${activity.durationMinutes}m`
                   : label}
@@ -539,37 +547,37 @@ function ActivityModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
-      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-xs p-5">
+      <div className="absolute inset-0 bg-black/40 dark:bg-black/60" onClick={onClose} />
+      <div className="relative glass rounded-xl shadow-xl dark:shadow-glow w-full max-w-sm p-5 animate-scale-in">
         <div className="flex items-center gap-2 mb-4">
-          <div className="p-1.5 bg-blue-100 rounded-full text-blue-600">
+          <div className="p-1.5 bg-blue-100 dark:bg-blue-500/15 rounded-full text-blue-600 dark:text-blue-400">
             <ActivityIcon type={type} className="w-5 h-5" />
           </div>
-          <h3 className="font-semibold text-gray-900">
+          <h3 className="font-semibold text-gray-900 dark:text-slate-100">
             {existing ? `Edit ${label}` : `Log ${label}`}
           </h3>
         </div>
 
         <div className="space-y-3">
           <div>
-            <label className="block text-sm text-gray-600 mb-1">Duration (minutes)</label>
+            <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1">Duration (minutes)</label>
             <input
               type="number"
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
               placeholder="e.g. 45"
               autoFocus
-              className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:placeholder-slate-500"
             />
           </div>
           <div>
-            <label className="block text-sm text-gray-600 mb-1">Notes (optional)</label>
+            <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1">Notes (optional)</label>
             <input
               type="text"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="e.g. easy pace"
-              className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:placeholder-slate-500"
             />
           </div>
         </div>
@@ -577,21 +585,21 @@ function ActivityModal({
         <div className="flex gap-2 mt-4">
           <button
             onClick={() => onSave(duration ? Number(duration) : null, notes || null)}
-            className="flex-1 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700"
+            className="flex-1 py-2.5 gradient-btn rounded-lg text-sm"
           >
             {existing ? 'Update' : 'Save'}
           </button>
           {onDelete && (
             <button
               onClick={onDelete}
-              className="px-3 py-2 text-red-600 text-sm font-medium rounded-md border border-red-200 hover:bg-red-50"
+              className="px-3 py-2.5 text-red-600 dark:text-red-400 text-sm font-medium rounded-lg border border-red-200 dark:border-red-500/30 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
             >
               Remove
             </button>
           )}
           <button
             onClick={onClose}
-            className="px-3 py-2 text-gray-600 text-sm rounded-md border hover:bg-gray-50"
+            className="px-3 py-2.5 text-gray-600 dark:text-slate-400 text-sm rounded-lg border border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors"
           >
             Cancel
           </button>
@@ -616,6 +624,7 @@ function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave }
   const [editValue, setEditValue] = useState<string>(exercise.actualValue?.toString() ?? '');
   const [editSets, setEditSets] = useState<string>(exercise.actualSets?.toString() ?? '');
   const [editNotes, setEditNotes] = useState<string>(exercise.logNotes ?? '');
+  const [justChecked, setJustChecked] = useState(false);
 
   useEffect(() => {
     setEditValue(exercise.actualValue?.toString() ?? '');
@@ -625,36 +634,44 @@ function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave }
 
   const hasSets = exercise.targetType === 'reps_sets' || exercise.targetType === 'timed_sets';
 
+  const handleToggle = () => {
+    if (!exercise.completed) {
+      setJustChecked(true);
+      setTimeout(() => setJustChecked(false), 300);
+    }
+    onToggle();
+  };
+
   return (
-    <div className={`transition-colors ${exercise.completed ? 'bg-green-50' : ''}`}>
+    <div className={`transition-colors ${exercise.completed ? 'bg-green-50/80 dark:bg-green-500/5' : ''}`}>
       <div className="px-4 py-3 flex items-center gap-3">
         <button
-          onClick={isOwn ? onToggle : undefined}
+          onClick={isOwn ? handleToggle : undefined}
           disabled={!isOwn}
-          className={`flex-shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
+          className={`flex-shrink-0 w-10 h-10 rounded-xl border-2 flex items-center justify-center transition-all ${
             exercise.completed
-              ? 'bg-green-500 border-green-500 text-white'
+              ? 'bg-gradient-to-br from-green-500 to-emerald-600 border-green-500 dark:border-green-400 text-white'
               : isOwn
-              ? 'border-gray-300 hover:border-green-400'
-              : 'border-gray-200'
-          } ${isOwn ? 'cursor-pointer' : 'cursor-default'}`}
+              ? 'border-gray-300 dark:border-slate-600 hover:border-green-400 dark:hover:border-green-500'
+              : 'border-gray-200 dark:border-slate-700'
+          } ${isOwn ? 'cursor-pointer' : 'cursor-default'} ${justChecked ? 'animate-check-pop' : ''}`}
           aria-label={exercise.completed ? 'Mark incomplete' : 'Mark complete'}
         >
           {exercise.completed && (
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           )}
         </button>
 
         <div className="flex-1 min-w-0">
-          <div className={`text-sm font-medium ${exercise.completed ? 'text-green-800' : 'text-gray-900'}`}>
+          <div className={`text-sm font-medium ${exercise.completed ? 'text-green-800 dark:text-green-300' : 'text-gray-900 dark:text-slate-100'}`}>
             {exercise.name}
           </div>
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
             {formatTarget(exercise)}
             {exercise.actualValue != null && (
-              <span className="ml-1 text-blue-600">
+              <span className="ml-1 text-blue-600 dark:text-blue-400">
                 (did: {exercise.actualValue}{exercise.actualSets != null ? ` in ${exercise.actualSets} sets` : ''})
               </span>
             )}
@@ -664,8 +681,10 @@ function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave }
         {isOwn && (
           <button
             onClick={onExpand}
-            className={`flex-shrink-0 p-1.5 rounded hover:bg-gray-100 transition-colors ${
-              isExpanded ? 'text-blue-600 bg-blue-50' : 'text-gray-400'
+            className={`flex-shrink-0 p-2.5 rounded-xl transition-colors touch-target flex items-center justify-center ${
+              isExpanded
+                ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/15'
+                : 'text-gray-400 dark:text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-700/50'
             }`}
             aria-label="Edit details"
           >
@@ -677,42 +696,44 @@ function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave }
       </div>
 
       {isExpanded && isOwn && (
-        <div className="px-4 pb-3 pt-1 bg-gray-50 border-t border-gray-100">
-          <div className="flex flex-wrap gap-3 items-end">
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">
-                {exercise.targetType.startsWith('timed') ? 'Seconds' : 'Reps'}
-              </label>
-              <input
-                type="number"
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                placeholder={exercise.targetValue?.toString() ?? ''}
-                className="w-20 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
-
-            {hasSets && (
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Sets</label>
+        <div className="px-4 pb-3 pt-1 bg-gray-50 dark:bg-slate-800/40 border-t border-gray-100 dark:border-slate-700/50">
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end">
+            <div className="flex gap-3">
+              <div className="flex-1 sm:flex-none">
+                <label className="block text-xs text-gray-500 dark:text-slate-400 mb-1">
+                  {exercise.targetType.startsWith('timed') ? 'Seconds' : 'Reps'}
+                </label>
                 <input
                   type="number"
-                  value={editSets}
-                  onChange={(e) => setEditSets(e.target.value)}
-                  placeholder={exercise.targetSets?.toString() ?? ''}
-                  className="w-20 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  placeholder={exercise.targetValue?.toString() ?? ''}
+                  className="w-full sm:w-20 px-3 py-2.5 text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-            )}
 
-            <div className="flex-1 min-w-[120px]">
-              <label className="block text-xs text-gray-500 mb-1">Notes</label>
+              {hasSets && (
+                <div className="flex-1 sm:flex-none">
+                  <label className="block text-xs text-gray-500 dark:text-slate-400 mb-1">Sets</label>
+                  <input
+                    type="number"
+                    value={editSets}
+                    onChange={(e) => setEditSets(e.target.value)}
+                    placeholder={exercise.targetSets?.toString() ?? ''}
+                    className="w-full sm:w-20 px-3 py-2.5 text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="flex-1">
+              <label className="block text-xs text-gray-500 dark:text-slate-400 mb-1">Notes</label>
               <input
                 type="text"
                 value={editNotes}
                 onChange={(e) => setEditNotes(e.target.value)}
                 placeholder="Optional notes"
-                className="w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3 py-2.5 text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
@@ -724,7 +745,7 @@ function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave }
                   editNotes || null
                 )
               }
-              className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+              className="px-4 py-2.5 text-sm gradient-btn rounded-lg sm:flex-shrink-0"
             >
               Save
             </button>
@@ -754,20 +775,23 @@ function CommentSection({
   };
 
   return (
-    <div className="px-4 py-3 border-t">
+    <div className="px-4 py-3 border-t border-gray-100 dark:border-slate-700/50">
       {/* Existing comments */}
       {comments.length > 0 && (
         <div className="space-y-2 mb-3">
           {comments.map((c) => (
-            <div key={c.id} className="text-xs">
-              <span className="font-medium text-gray-700">{c.authorName}</span>
-              <span className="text-gray-400 ml-1">
-                {new Date(c.createdAt).toLocaleTimeString('en-GB', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </span>
-              <p className="text-gray-600 mt-0.5">{c.body}</p>
+            <div key={c.id} className="flex gap-2 text-sm">
+              <Avatar name={c.authorName} avatarUrl={c.authorAvatarUrl} size="sm" className="mt-0.5" />
+              <div>
+                <span className="font-medium text-gray-700 dark:text-slate-300">{c.authorName}</span>
+                <span className="text-gray-400 dark:text-slate-500 ml-1 text-xs">
+                  {new Date(c.createdAt).toLocaleTimeString('en-GB', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </span>
+                <p className="text-gray-600 dark:text-slate-400 mt-0.5 text-sm">{c.body}</p>
+              </div>
             </div>
           ))}
         </div>
@@ -780,12 +804,12 @@ function CommentSection({
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Leave a comment..."
-          className="flex-1 px-2 py-1.5 text-xs border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="flex-1 px-3 py-2.5 text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:placeholder-slate-500"
         />
         <button
           type="submit"
           disabled={!text.trim()}
-          className="px-2.5 py-1.5 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="px-3 py-2.5 text-sm gradient-btn rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Send
         </button>

@@ -87,4 +87,11 @@ db.exec(`
   );
 `);
 
+// Safe migration: add avatar_url column to users if missing
+try {
+  db.exec(`ALTER TABLE users ADD COLUMN avatar_url TEXT`);
+} catch {
+  // Column already exists — ignore
+}
+
 export default db;

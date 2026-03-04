@@ -86,9 +86,9 @@ export default function NotificationSettings({ currentUserName }: NotificationSe
 
   if (loading || !settings) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors">
         <NavBar currentUserName={currentUserName} />
-        <div className="text-center py-12 text-gray-400">Loading...</div>
+        <div className="text-center py-12 text-gray-400 dark:text-slate-500">Loading...</div>
       </div>
     );
   }
@@ -96,18 +96,18 @@ export default function NotificationSettings({ currentUserName }: NotificationSe
   const allDisabled = !settings.notifications_enabled;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors">
       <NavBar currentUserName={currentUserName} />
 
       <div className="max-w-lg mx-auto px-4 py-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Notifications</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-6">Notifications</h2>
 
-        <div className="bg-white rounded-lg shadow-sm border divide-y">
+        <div className="glass rounded-xl shadow-sm divide-y divide-gray-100 dark:divide-slate-700/50 animate-fade-in">
           {/* Master toggle */}
           <div className="px-4 py-4 flex items-center justify-between">
             <div>
-              <div className="font-medium text-gray-900">Email Notifications</div>
-              <div className="text-sm text-gray-500">Enable or disable all email notifications</div>
+              <div className="font-medium text-gray-900 dark:text-slate-100">Email Notifications</div>
+              <div className="text-sm text-gray-500 dark:text-slate-400">Enable or disable all email notifications</div>
             </div>
             <Toggle
               checked={!!settings.notifications_enabled}
@@ -117,7 +117,7 @@ export default function NotificationSettings({ currentUserName }: NotificationSe
 
           {/* Notification email */}
           <div className={`px-4 py-4 ${allDisabled ? 'opacity-40' : ''}`}>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
               Send notifications to
             </label>
             <input
@@ -126,9 +126,9 @@ export default function NotificationSettings({ currentUserName }: NotificationSe
               onChange={(e) => setSettings({ ...settings, notification_email: e.target.value || null })}
               disabled={allDisabled}
               placeholder="Leave blank to use login email"
-              className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+              className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 dark:disabled:bg-slate-800 dark:placeholder-slate-500"
             />
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
               Where to receive notification emails (defaults to your account email)
             </p>
           </div>
@@ -137,8 +137,8 @@ export default function NotificationSettings({ currentUserName }: NotificationSe
           <div className={`px-4 py-4 ${allDisabled ? 'opacity-40' : ''}`}>
             <div className="flex items-center justify-between mb-2">
               <div>
-                <div className="font-medium text-gray-900">Evening Reminder</div>
-                <div className="text-sm text-gray-500">Nudge if you haven&apos;t logged exercises</div>
+                <div className="font-medium text-gray-900 dark:text-slate-100">Evening Reminder</div>
+                <div className="text-sm text-gray-500 dark:text-slate-400">Nudge if you haven&apos;t logged exercises</div>
               </div>
               <Toggle
                 checked={!!settings.evening_reminder_enabled}
@@ -148,11 +148,11 @@ export default function NotificationSettings({ currentUserName }: NotificationSe
             </div>
             {settings.evening_reminder_enabled && !allDisabled && (
               <div className="flex items-center gap-2 mt-2">
-                <label className="text-sm text-gray-600">Send at</label>
+                <label className="text-sm text-gray-600 dark:text-slate-400">Send at</label>
                 <select
                   value={settings.evening_reminder_hour}
                   onChange={(e) => setSettings({ ...settings, evening_reminder_hour: Number(e.target.value) })}
-                  className="px-2 py-1 border rounded text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-3 py-2 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {Array.from({ length: 24 }, (_, i) => (
                     <option key={i} value={i}>
@@ -168,8 +168,8 @@ export default function NotificationSettings({ currentUserName }: NotificationSe
           <div className={`px-4 py-4 ${allDisabled ? 'opacity-40' : ''}`}>
             <div className="flex items-center justify-between mb-2">
               <div>
-                <div className="font-medium text-gray-900">Morning Summary</div>
-                <div className="text-sm text-gray-500">What your training partner did yesterday</div>
+                <div className="font-medium text-gray-900 dark:text-slate-100">Morning Summary</div>
+                <div className="text-sm text-gray-500 dark:text-slate-400">What your training partner did yesterday</div>
               </div>
               <Toggle
                 checked={!!settings.morning_summary_enabled}
@@ -179,11 +179,11 @@ export default function NotificationSettings({ currentUserName }: NotificationSe
             </div>
             {settings.morning_summary_enabled && !allDisabled && (
               <div className="flex items-center gap-2 mt-2">
-                <label className="text-sm text-gray-600">Send at</label>
+                <label className="text-sm text-gray-600 dark:text-slate-400">Send at</label>
                 <select
                   value={settings.morning_summary_hour}
                   onChange={(e) => setSettings({ ...settings, morning_summary_hour: Number(e.target.value) })}
-                  className="px-2 py-1 border rounded text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-3 py-2 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {Array.from({ length: 24 }, (_, i) => (
                     <option key={i} value={i}>
@@ -201,7 +201,7 @@ export default function NotificationSettings({ currentUserName }: NotificationSe
           <button
             onClick={saveSettings}
             disabled={saving}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="px-4 py-2.5 text-sm font-medium gradient-btn rounded-lg disabled:opacity-50"
           >
             {saving ? 'Saving...' : 'Save Settings'}
           </button>
@@ -209,7 +209,7 @@ export default function NotificationSettings({ currentUserName }: NotificationSe
           {message && (
             <span
               className={`text-sm ${
-                message.type === 'success' ? 'text-green-600' : 'text-red-600'
+                message.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
               }`}
             >
               {message.text}
@@ -219,24 +219,24 @@ export default function NotificationSettings({ currentUserName }: NotificationSe
 
         {/* Test emails */}
         <div className="mt-8">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">Test Emails</h3>
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3">Test Emails</h3>
           <div className="flex gap-3">
             <button
               onClick={() => sendTestEmail('evening')}
               disabled={!!testingSending}
-              className="px-4 py-2 text-sm text-gray-700 border rounded-lg hover:bg-gray-50 disabled:opacity-50"
+              className="px-4 py-2.5 text-sm text-gray-700 dark:text-slate-300 border border-gray-200 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
             >
               {testingSending === 'evening' ? 'Sending...' : 'Send Test Reminder'}
             </button>
             <button
               onClick={() => sendTestEmail('morning')}
               disabled={!!testingSending}
-              className="px-4 py-2 text-sm text-gray-700 border rounded-lg hover:bg-gray-50 disabled:opacity-50"
+              className="px-4 py-2.5 text-sm text-gray-700 dark:text-slate-300 border border-gray-200 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
             >
               {testingSending === 'morning' ? 'Sending...' : 'Send Test Summary'}
             </button>
           </div>
-          <p className="text-xs text-gray-400 mt-2">
+          <p className="text-xs text-gray-400 dark:text-slate-500 mt-2">
             Test emails are sent to your notification email (or login email). Make sure to save settings first.
           </p>
         </div>
@@ -260,14 +260,14 @@ function Toggle({
     <button
       onClick={() => !disabled && onChange(!checked)}
       disabled={disabled}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-        checked ? 'bg-blue-600' : 'bg-gray-300'
+      className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+        checked ? 'bg-gradient-to-r from-blue-600 to-violet-600' : 'bg-gray-300 dark:bg-slate-600'
       } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
       role="switch"
       aria-checked={checked}
     >
       <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform ${
           checked ? 'translate-x-6' : 'translate-x-1'
         }`}
       />

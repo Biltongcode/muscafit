@@ -10,8 +10,8 @@ export async function GET() {
   }
 
   const users = db
-    .prepare('SELECT id, name FROM users')
-    .all() as Array<{ id: number; name: string }>;
+    .prepare('SELECT id, name, avatar_url as avatarUrl FROM users')
+    .all() as Array<{ id: number; name: string; avatarUrl: string | null }>;
 
   return NextResponse.json({ users });
 }

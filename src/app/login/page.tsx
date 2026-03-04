@@ -36,22 +36,22 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 px-4">
+      <div className="w-full max-w-sm animate-fade-in">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Muscafit</h1>
-          <p className="mt-1 text-gray-500">Log in to track your training</p>
+          <h1 className="text-4xl font-bold gradient-text">Muscafit</h1>
+          <p className="mt-2 text-slate-400">Log in to track your training</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-glow-lg p-6 space-y-4">
           {error && (
-            <div className="bg-red-50 text-red-700 text-sm rounded-md p-3">
+            <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg p-3">
               {error}
             </div>
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-1">
               Email
             </label>
             <input
@@ -61,12 +61,12 @@ function LoginForm() {
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-3 border border-slate-600 bg-slate-700/50 text-slate-100 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-slate-500"
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-1">
               Password
             </label>
             <input
@@ -76,14 +76,14 @@ function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               required
               autoComplete="current-password"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-3 border border-slate-600 bg-slate-700/50 text-slate-100 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-slate-500"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-md transition-colors"
+            className="w-full py-3 px-4 gradient-btn rounded-xl text-base disabled:opacity-60 transition-all shadow-glow"
           >
             {loading ? 'Signing in...' : 'Sign in'}
           </button>
@@ -96,8 +96,8 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p className="text-gray-500">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+        <p className="text-slate-500">Loading...</p>
       </div>
     }>
       <LoginForm />

@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'start and end parameters required' }, { status: 400 });
   }
 
-  const allUsers = db.prepare('SELECT id, name FROM users').all() as Array<{ id: number; name: string }>;
+  const allUsers = db.prepare('SELECT id, name, avatar_url FROM users').all() as Array<{ id: number; name: string; avatar_url: string | null }>;
 
   // Get exercise counts per user per day (only active exercises)
   const logStats = db.prepare(
@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    return { id: user.id, name: user.name, days };
+    return { id: user.id, name: user.name, avatarUrl: user.avatar_url, days };
   });
 
   return NextResponse.json({ users });
