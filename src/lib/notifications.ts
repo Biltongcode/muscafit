@@ -6,6 +6,15 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.NOTIFICATION_FROM || 'Muscafit <onboarding@resend.dev>';
 const APP_URL = process.env.NEXTAUTH_URL || 'https://train.biltongcodes.com';
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 interface UserWithSettings {
   id: number;
   name: string;
@@ -76,7 +85,7 @@ async function sendEveningReminders() {
         subject: "\uD83D\uDCAA Don't forget to log your training today",
         html: `
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #1a1a1a; margin-bottom: 16px;">Hey ${user.name}!</h2>
+            <h2 style="color: #1a1a1a; margin-bottom: 16px;">Hey ${escapeHtml(user.name)}!</h2>
             <p style="color: #4a4a4a; line-height: 1.6;">
               You haven't logged any exercises today yet. You've got
               <strong>${result.total} exercise${result.total !== 1 ? 's' : ''}</strong> waiting for you.
@@ -142,14 +151,14 @@ async function sendMorningSummaries() {
       const completed = exercises.filter((e) => e.completed).length;
       const total = exercises.length;
 
-      let section = `<h3 style="color: #1a1a1a; margin: 16px 0 8px;">${other.name}</h3>`;
+      let section = `<h3 style="color: #1a1a1a; margin: 16px 0 8px;">${escapeHtml(other.name)}</h3>`;
 
       if (total > 0) {
         const color = completed === total ? '#16a34a' : completed > 0 ? '#d97706' : '#9ca3af';
         section += `<p style="color: ${color}; font-weight: 600; margin: 4px 0;">Exercises: ${completed}/${total} completed</p>`;
 
         if (completed > 0) {
-          const completedNames = exercises.filter((e) => e.completed).map((e) => e.name);
+          const completedNames = exercises.filter((e) => e.completed).map((e) => escapeHtml(e.name));
           section += `<p style="color: #6b7280; font-size: 14px; margin: 2px 0;">${completedNames.join(', ')}</p>`;
         }
       } else {
@@ -158,7 +167,7 @@ async function sendMorningSummaries() {
 
       if (activities.length > 0) {
         const activityStrs = activities.map((a) => {
-          const label = a.activity_type.charAt(0).toUpperCase() + a.activity_type.slice(1);
+          const label = escapeHtml(a.activity_type.charAt(0).toUpperCase() + a.activity_type.slice(1));
           return a.duration_minutes ? `${label} (${a.duration_minutes}min)` : label;
         });
         section += `<p style="color: #4a4a4a; font-size: 14px; margin: 4px 0;">\u{1F3C3} ${activityStrs.join(', ')}</p>`;
@@ -168,7 +177,7 @@ async function sendMorningSummaries() {
         section += `<div style="margin-top: 8px;">`;
         for (const c of comments) {
           section += `<p style="color: #6b7280; font-size: 13px; margin: 2px 0; padding-left: 8px; border-left: 2px solid #e5e7eb;">
-            <strong>${c.author_name}:</strong> ${c.body}
+            <strong>${escapeHtml(c.author_name)}:</strong> ${escapeHtml(c.body)}
           </p>`;
         }
         section += `</div>`;
@@ -242,7 +251,7 @@ export async function sendTestEmail(userId: number, type: 'evening' | 'morning')
       subject: "\uD83D\uDCAA Don't forget to log your training today",
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #1a1a1a; margin-bottom: 16px;">Hey ${user.name}!</h2>
+          <h2 style="color: #1a1a1a; margin-bottom: 16px;">Hey ${escapeHtml(user.name)}!</h2>
           <p style="color: #4a4a4a; line-height: 1.6;">
             ${result.completed > 0
               ? `You've completed <strong>${result.completed}/${result.total}</strong> exercises today. Keep going!`
@@ -283,7 +292,7 @@ export async function sendTestEmail(userId: number, type: 'evening' | 'morning')
     const color = completed === total && total > 0 ? '#16a34a' : completed > 0 ? '#d97706' : '#9ca3af';
 
     summaryParts.push(`
-      <h3 style="color: #1a1a1a; margin: 16px 0 8px;">${other.name}</h3>
+      <h3 style="color: #1a1a1a; margin: 16px 0 8px;">${escapeHtml(other.name)}</h3>
       <p style="color: ${color}; font-weight: 600;">Exercises: ${completed}/${total} completed</p>
     `);
   }
