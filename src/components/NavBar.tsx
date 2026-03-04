@@ -112,7 +112,7 @@ export default function NavBar({ currentUserName, active }: NavBarProps) {
           </button>
 
           {menuOpen && (
-            <div className="absolute right-0 top-full mt-1 w-56 sm:w-48 glass rounded-xl shadow-lg dark:shadow-glow py-1 z-50 animate-scale-in">
+            <div className="absolute right-0 top-full mt-1 w-56 sm:w-48 bg-white border border-gray-200 dark:bg-slate-800 dark:border-slate-700 rounded-xl shadow-lg dark:shadow-glow py-1 z-50 animate-scale-in">
               <div className="px-4 py-2 text-sm text-gray-500 dark:text-slate-400 border-b border-gray-100 dark:border-slate-700/50 sm:hidden">
                 {currentUserName}
               </div>

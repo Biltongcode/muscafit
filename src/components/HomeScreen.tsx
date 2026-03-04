@@ -119,19 +119,19 @@ export default function HomeScreen({ currentUserName }: HomeScreenProps) {
             <li className="flex items-start gap-3">
               <span className="mt-0.5 w-6 h-6 rounded-full bg-blue-500/10 dark:bg-blue-400/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">5</span>
               <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
-                <strong>Schedule exercises</strong> for specific days of the week. Tap the gear icon (top-right), go to Exercises, edit an exercise, and use the day picker to assign it to certain days. Unscheduled days become rest days.
+                <strong>Schedule exercises</strong> for specific days of the week. Tap your name (top-right), go to My Exercises, edit an exercise, and use the day picker to assign it to certain days. Unscheduled days become rest days.
               </p>
             </li>
             <li className="flex items-start gap-3">
               <span className="mt-0.5 w-6 h-6 rounded-full bg-blue-500/10 dark:bg-blue-400/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">6</span>
               <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
-                <strong>Manage exercises & reminders</strong> from the gear icon in the top-right corner. You can add, edit, reorder, and configure email notifications.
+                <strong>Manage exercises & reminders</strong> from the menu under your name in the top-right corner. You can add, edit, reorder, and configure email notifications.
               </p>
             </li>
             <li className="flex items-start gap-3">
               <span className="mt-0.5 w-6 h-6 rounded-full bg-blue-500/10 dark:bg-blue-400/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">7</span>
               <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
-                <strong>Connect Strava</strong> to see your recent activities in one feed. Tap the gear icon, go to Strava, and link your account.
+                <strong>Connect Strava</strong> to see your recent activities in one feed. Tap your name (top-right), go to Strava, and link your account.
               </p>
             </li>
           </ul>
