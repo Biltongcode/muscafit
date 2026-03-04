@@ -67,3 +67,28 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
   return NextResponse.json({ exercise: updated });
 }
+
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const exerciseId = Number(params.id);
+  const userId = Number(session.user.id);
+
+  // Verify ownership
+  const exercise = db
+    .prepare('SELECT id FROM exercises WHERE id = ? AND user_id = ?')
+    .get(exerciseId, userId);
+
+  if (!exercise) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  // Delete associated logs first, then the exercise
+  db.prepare('DELETE FROM exercise_logs WHERE exercise_id = ? AND user_id = ?').run(exerciseId, userId);
+  db.prepare('DELETE FROM exercises WHERE id = ? AND user_id = ?').run(exerciseId, userId);
+
+  return NextResponse.json({ success: true });
+}
