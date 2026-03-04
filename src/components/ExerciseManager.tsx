@@ -13,6 +13,7 @@ interface Exercise {
   notes: string | null;
   sort_order: number;
   is_active: number;
+  schedule_days: string | null;
 }
 
 interface ExerciseManagerProps {
@@ -26,6 +27,18 @@ const TARGET_TYPES = [
   { value: 'timed', label: 'Timed (seconds)' },
   { value: 'timed_sets', label: 'Timed Sets' },
 ];
+
+const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const DAY_NUMBERS = ['1', '2', '3', '4', '5', '6', '7'];
+
+function formatSchedule(scheduleDays: string | null): string {
+  if (!scheduleDays) return 'Every day';
+  const days = scheduleDays.split(',');
+  if (days.length === 7) return 'Every day';
+  if (days.length === 5 && !days.includes('6') && !days.includes('7')) return 'Weekdays';
+  if (days.length === 2 && days.includes('6') && days.includes('7')) return 'Weekends';
+  return days.map(d => DAY_NAMES[parseInt(d) - 1]).join(', ');
+}
 
 function formatTarget(ex: Exercise): string {
   switch (ex.target_type) {
@@ -51,10 +64,11 @@ interface EditFormData {
   targetSets: string;
   targetPerSet: string;
   notes: string;
+  scheduleDays: string;
 }
 
 function emptyForm(): EditFormData {
-  return { name: '', targetType: 'reps', targetValue: '', targetSets: '', targetPerSet: '', notes: '' };
+  return { name: '', targetType: 'reps', targetValue: '', targetSets: '', targetPerSet: '', notes: '', scheduleDays: '' };
 }
 
 function exerciseToForm(ex: Exercise): EditFormData {
@@ -65,6 +79,7 @@ function exerciseToForm(ex: Exercise): EditFormData {
     targetSets: ex.target_sets?.toString() ?? '',
     targetPerSet: ex.target_per_set?.toString() ?? '',
     notes: ex.notes ?? '',
+    scheduleDays: ex.schedule_days ?? '',
   };
 }
 
@@ -153,6 +168,7 @@ export default function ExerciseManager({ currentUserId, currentUserName }: Exer
           targetSets: ex.target_sets,
           targetPerSet: ex.target_per_set,
           notes: ex.notes,
+          scheduleDays: ex.schedule_days,
         }),
       });
       setCopiedIds((prev) => new Set(prev).add(ex.id));
@@ -197,6 +213,7 @@ export default function ExerciseManager({ currentUserId, currentUserName }: Exer
       targetSets: showSets && form.targetSets ? Number(form.targetSets) : null,
       targetPerSet: showSets && form.targetPerSet ? Number(form.targetPerSet) : null,
       notes: form.notes.trim() || null,
+      scheduleDays: form.scheduleDays || null,
     };
 
     try {
@@ -333,6 +350,9 @@ export default function ExerciseManager({ currentUserId, currentUserName }: Exer
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-gray-900 dark:text-slate-100">{ex.name}</div>
                       <div className="text-sm text-gray-500 dark:text-slate-400">{formatTarget(ex)}</div>
+                      {ex.schedule_days && (
+                        <div className="text-xs text-blue-500 dark:text-blue-400 mt-0.5">{formatSchedule(ex.schedule_days)}</div>
+                      )}
                     </div>
 
                     {/* Actions */}
@@ -426,6 +446,9 @@ export default function ExerciseManager({ currentUserId, currentUserName }: Exer
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-gray-900 dark:text-slate-100">{ex.name}</div>
                           <div className="text-sm text-gray-500 dark:text-slate-400">{formatTarget(ex)}</div>
+                          {ex.schedule_days && (
+                            <div className="text-xs text-blue-500 dark:text-blue-400 mt-0.5">{formatSchedule(ex.schedule_days)}</div>
+                          )}
                         </div>
                         <button
                           onClick={() => copyExercise(ex)}
@@ -558,6 +581,17 @@ function ExerciseForm({
           />
         </div>
 
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Schedule</label>
+          <DayPicker
+            selectedDays={form.scheduleDays}
+            onChange={(days) => setForm({ ...form, scheduleDays: days })}
+          />
+          <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
+            All selected = every day. Deselect days for rest days.
+          </p>
+        </div>
+
         <div className="flex gap-2 pt-1">
           <button
             onClick={onSave}
@@ -574,6 +608,55 @@ function ExerciseForm({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// --- Day Picker for scheduling ---
+
+function DayPicker({ selectedDays, onChange }: { selectedDays: string; onChange: (days: string) => void }) {
+  const selected = selectedDays ? selectedDays.split(',') : DAY_NUMBERS;
+  const allSelected = selected.length === 7 || selectedDays === '';
+
+  const toggle = (dayNum: string) => {
+    let newSelected: string[];
+    if (allSelected) {
+      // Switching from "every day" to specific: uncheck this one day
+      newSelected = DAY_NUMBERS.filter(d => d !== dayNum);
+    } else if (selected.includes(dayNum)) {
+      // Don't allow deselecting the last day — reset to all instead
+      if (selected.length === 1) {
+        onChange('');
+        return;
+      }
+      newSelected = selected.filter(d => d !== dayNum);
+    } else {
+      newSelected = [...selected, dayNum].sort();
+    }
+    // If all 7 are selected, store as empty (= every day)
+    onChange(newSelected.length === 7 ? '' : newSelected.join(','));
+  };
+
+  return (
+    <div className="flex gap-1.5">
+      {DAY_NAMES.map((label, i) => {
+        const dayNum = DAY_NUMBERS[i];
+        const isSelected = allSelected || selected.includes(dayNum);
+        return (
+          <button
+            key={dayNum}
+            type="button"
+            onClick={() => toggle(dayNum)}
+            className={`w-10 h-10 rounded-lg text-xs font-medium transition-colors ${
+              isSelected
+                ? 'gradient-btn'
+                : 'bg-gray-100 text-gray-400 dark:bg-slate-700/50 dark:text-slate-500 hover:bg-gray-200 dark:hover:bg-slate-600/50'
+            }`}
+          >
+            {label}
+          </button>
+        );
+      })}
     </div>
   );
 }

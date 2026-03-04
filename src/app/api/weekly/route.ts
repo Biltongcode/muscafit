@@ -48,25 +48,42 @@ export async function GET(req: NextRequest) {
     activity_type: string;
   }>;
 
+  // Get each user's exercises with schedule info for computing per-day totals
+  const getUserExercises = db.prepare(
+    'SELECT id, schedule_days FROM exercises WHERE user_id = ? AND is_active = 1'
+  );
+
+  function getScheduledCount(exercises: Array<{ id: number; schedule_days: string | null }>, dateStr: string): number {
+    const d = new Date(dateStr + 'T12:00:00');
+    const jsDay = d.getDay();
+    const isoDay = jsDay === 0 ? 7 : jsDay;
+    return exercises.filter(ex => {
+      if (!ex.schedule_days) return true;
+      return ex.schedule_days.split(',').includes(String(isoDay));
+    }).length;
+  }
+
   // Build response grouped by user
   const users = allUsers.map((user) => {
+    const userExercises = getUserExercises.all(user.id) as Array<{ id: number; schedule_days: string | null }>;
+
     // Build a map of date -> stats
-    const days: Record<string, { completed: number; total: number; activities: string[] }> = {};
+    const days: Record<string, { completed: number; total: number; activities: string[]; isRestDay: boolean }> = {};
 
     // Generate all dates in range
     const current = new Date(startDate + 'T12:00:00');
     const end = new Date(endDate + 'T12:00:00');
     while (current <= end) {
       const dateStr = current.toISOString().split('T')[0];
-      days[dateStr] = { completed: 0, total: 0, activities: [] };
+      const scheduledTotal = getScheduledCount(userExercises, dateStr);
+      days[dateStr] = { completed: 0, total: scheduledTotal, activities: [], isRestDay: userExercises.length > 0 && scheduledTotal === 0 };
       current.setDate(current.getDate() + 1);
     }
 
-    // Fill in exercise stats
+    // Fill in completed counts from logs
     for (const stat of logStats) {
       if (stat.user_id === user.id && days[stat.log_date]) {
         days[stat.log_date].completed = stat.completed;
-        days[stat.log_date].total = stat.total;
       }
     }
 

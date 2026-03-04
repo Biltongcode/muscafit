@@ -9,6 +9,7 @@ interface DayStats {
   completed: number;
   total: number;
   activities: string[];
+  isRestDay?: boolean;
 }
 
 interface UserWeek {
@@ -222,10 +223,10 @@ export default function WeeklyView({ currentUserId, currentUserName }: WeeklyVie
                         {weekDates.map((dateStr) => {
                           const stats = user.days[dateStr];
                           const isToday = dateStr === todayStr;
+                          const isRestDay = stats?.isRestDay;
                           const hasData = stats && stats.total > 0;
                           const allDone = hasData && stats.completed === stats.total;
                           const partial = hasData && stats.completed > 0 && !allDone;
-                          const isFuture = dateStr > todayStr;
 
                           return (
                             <button
@@ -235,7 +236,12 @@ export default function WeeklyView({ currentUserId, currentUserName }: WeeklyVie
                                 isToday ? 'bg-blue-50/50 dark:bg-blue-500/5' : ''
                               }`}
                             >
-                              {hasData ? (
+                              {isRestDay ? (
+                                <div className="text-center">
+                                  <span className="text-xs text-gray-300 dark:text-slate-600 italic">Rest</span>
+                                  <ActivityDots activities={stats.activities} />
+                                </div>
+                              ) : hasData ? (
                                 <div className="text-center">
                                   <span
                                     className={`inline-block text-sm font-semibold px-1.5 py-0.5 rounded ${
@@ -252,9 +258,7 @@ export default function WeeklyView({ currentUserId, currentUserName }: WeeklyVie
                                 </div>
                               ) : (
                                 <div className="text-center">
-                                  <span className="text-xs text-gray-300 dark:text-slate-600">
-                                    {isFuture ? '–' : '–'}
-                                  </span>
+                                  <span className="text-xs text-gray-300 dark:text-slate-600">–</span>
                                 </div>
                               )}
                             </button>

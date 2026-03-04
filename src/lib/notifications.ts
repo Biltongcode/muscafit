@@ -65,16 +65,30 @@ async function sendEveningReminders() {
 
     if (!enabled || !eveningEnabled || currentHour !== reminderHour) continue;
 
-    // Check completion
-    const result = db.prepare(`
-      SELECT COUNT(*) as completed,
-             (SELECT COUNT(*) FROM exercises WHERE user_id = ? AND is_active = 1) as total
-      FROM exercise_logs
-      WHERE user_id = ? AND log_date = ? AND completed = 1
-    `).get(user.id, user.id, today) as { completed: number; total: number };
+    // Check completion — respecting schedule
+    const jsDay = new Date().getDay();
+    const isoDay = jsDay === 0 ? 7 : jsDay;
 
-    // Only send if they have exercises but completed 0
-    if (result.total === 0 || result.completed > 0) continue;
+    const allExercises = db.prepare(
+      'SELECT schedule_days FROM exercises WHERE user_id = ? AND is_active = 1'
+    ).all(user.id) as Array<{ schedule_days: string | null }>;
+
+    const todayTotal = allExercises.filter(ex => {
+      if (!ex.schedule_days) return true;
+      return ex.schedule_days.split(',').includes(String(isoDay));
+    }).length;
+
+    // Skip if rest day (no exercises scheduled) or no exercises at all
+    if (todayTotal === 0) continue;
+
+    const completedResult = db.prepare(
+      'SELECT COUNT(*) as completed FROM exercise_logs WHERE user_id = ? AND log_date = ? AND completed = 1'
+    ).get(user.id, today) as { completed: number };
+
+    // Only send if they have scheduled exercises but completed 0
+    if (completedResult.completed > 0) continue;
+
+    const result = { completed: completedResult.completed, total: todayTotal };
 
     const toEmail = user.notification_email || user.email;
 

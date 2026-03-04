@@ -94,6 +94,13 @@ try {
   // Column already exists — ignore
 }
 
+// Safe migration: add schedule_days column to exercises if missing
+try {
+  db.exec(`ALTER TABLE exercises ADD COLUMN schedule_days TEXT`);
+} catch {
+  // Column already exists — ignore
+}
+
 // Strava integration tables
 db.exec(`
   CREATE TABLE IF NOT EXISTS strava_tokens (

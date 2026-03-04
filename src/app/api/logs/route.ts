@@ -23,14 +23,22 @@ export async function GET(req: NextRequest) {
      VALUES (?, ?, ?)`
   );
 
+  // Compute ISO weekday (1=Monday, 7=Sunday)
+  const dateObj = new Date(date + 'T12:00:00');
+  const jsDay = dateObj.getDay();
+  const isoDay = jsDay === 0 ? 7 : jsDay;
+
   const getActiveExercises = db.prepare(
-    'SELECT id FROM exercises WHERE user_id = ? AND is_active = 1'
+    'SELECT id, schedule_days FROM exercises WHERE user_id = ? AND is_active = 1'
   );
 
   for (const user of allUsers) {
-    const exercises = getActiveExercises.all(user.id) as Array<{ id: number }>;
+    const exercises = getActiveExercises.all(user.id) as Array<{ id: number; schedule_days: string | null }>;
     for (const ex of exercises) {
-      insertLog.run(user.id, ex.id, date);
+      // NULL/empty schedule_days = every day; otherwise check if today's weekday is included
+      if (!ex.schedule_days || ex.schedule_days.split(',').includes(String(isoDay))) {
+        insertLog.run(user.id, ex.id, date);
+      }
     }
   }
 
@@ -77,28 +85,38 @@ export async function GET(req: NextRequest) {
   }>;
 
   // Group by user
-  const users = allUsers.map((user) => ({
-    id: user.id,
-    name: user.name,
-    avatarUrl: user.avatar_url,
-    exercises: allLogs
-      .filter((log) => log.user_id === user.id)
-      .map((log) => ({
-        logId: log.log_id,
-        exerciseId: log.exercise_id,
-        name: log.name,
-        targetType: log.target_type,
-        targetValue: log.target_value,
-        targetSets: log.target_sets,
-        targetPerSet: log.target_per_set,
-        exerciseNotes: log.exercise_notes,
-        completed: log.completed === 1,
-        actualValue: log.actual_value,
-        actualSets: log.actual_sets,
-        logNotes: log.log_notes,
-        completedAt: log.completed_at,
-      })),
-  }));
+  const users = allUsers.map((user) => {
+    const userExercises = getActiveExercises.all(user.id) as Array<{ id: number; schedule_days: string | null }>;
+    const hasActiveExercises = userExercises.length > 0;
+    const scheduledToday = userExercises.filter(ex =>
+      !ex.schedule_days || ex.schedule_days.split(',').includes(String(isoDay))
+    ).length;
+    const isRestDay = hasActiveExercises && scheduledToday === 0;
+
+    return {
+      id: user.id,
+      name: user.name,
+      avatarUrl: user.avatar_url,
+      isRestDay,
+      exercises: allLogs
+        .filter((log) => log.user_id === user.id)
+        .map((log) => ({
+          logId: log.log_id,
+          exerciseId: log.exercise_id,
+          name: log.name,
+          targetType: log.target_type,
+          targetValue: log.target_value,
+          targetSets: log.target_sets,
+          targetPerSet: log.target_per_set,
+          exerciseNotes: log.exercise_notes,
+          completed: log.completed === 1,
+          actualValue: log.actual_value,
+          actualSets: log.actual_sets,
+          logNotes: log.log_notes,
+          completedAt: log.completed_at,
+        })),
+    };
+  });
 
   return NextResponse.json({ users });
 }

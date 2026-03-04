@@ -29,6 +29,7 @@ interface UserData {
   name: string;
   avatarUrl?: string | null;
   exercises: Exercise[];
+  isRestDay?: boolean;
 }
 
 interface Activity {
@@ -443,7 +444,7 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
                   <div className="divide-y divide-gray-100 dark:divide-slate-700/50">
                     {user.exercises.length === 0 ? (
                       <div className="px-4 py-6 text-center text-sm text-gray-400 dark:text-slate-500">
-                        No exercises configured
+                        {user.isRestDay ? 'Rest day' : 'No exercises configured'}
                       </div>
                     ) : (
                       user.exercises.map((ex) => (
