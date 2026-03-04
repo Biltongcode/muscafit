@@ -18,7 +18,12 @@ export default function NavBar({ currentUserName, active }: NavBarProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Auto-detect active tab from pathname if not explicitly provided
-  const currentTab = active ?? (pathname.startsWith('/weekly') ? 'weekly' : pathname.startsWith('/settings') ? 'settings' : 'daily');
+  const currentTab = active ?? (
+    pathname.startsWith('/weekly') ? 'weekly' :
+    pathname.startsWith('/daily') ? 'daily' :
+    pathname.startsWith('/settings') ? 'settings' :
+    pathname === '/' ? 'home' : 'daily'
+  );
 
   // Close menu on outside click
   useEffect(() => {
@@ -37,10 +42,12 @@ export default function NavBar({ currentUserName, active }: NavBarProps) {
     <header className="glass-strong shadow-sm sticky top-0 z-40">
       <div className="max-w-5xl mx-auto px-4 py-2 flex items-center justify-between">
         <div className="flex items-center gap-4 sm:gap-6">
-          <h1 className="text-lg font-bold gradient-text">Muscafit</h1>
+          <button onClick={() => router.push('/')} className="text-lg font-bold gradient-text hover:opacity-80 transition-opacity">
+            Muscafit
+          </button>
           <nav className="flex gap-1">
             <button
-              onClick={() => router.push('/')}
+              onClick={() => router.push('/daily')}
               className={`px-3 sm:px-4 py-2.5 text-sm font-medium rounded-lg transition-colors touch-target flex items-center ${
                 currentTab === 'daily'
                   ? 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400'
