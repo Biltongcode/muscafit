@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import NavBar from './NavBar';
 import Avatar from './Avatar';
+import StravaSection from './StravaSection';
 
 // --- Types ---
 
@@ -38,6 +39,18 @@ interface Activity {
   distanceKm: number | null;
   notes: string | null;
   sessionDate: string;
+}
+
+interface StravaActivity {
+  stravaId: number;
+  userId: number;
+  name: string;
+  sportType: string;
+  distanceMeters: number;
+  movingTimeSeconds: number;
+  totalElevationGain: number;
+  startDateLocal: string;
+  activityDate: string;
 }
 
 interface Comment {
@@ -155,6 +168,8 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
   const [date, setDate] = useState(initialDate);
   const [users, setUsers] = useState<UserData[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [stravaActivities, setStravaActivities] = useState<StravaActivity[]>([]);
+  const [stravaConnectedUserIds, setStravaConnectedUserIds] = useState<number[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedLog, setExpandedLog] = useState<number | null>(null);
@@ -169,17 +184,21 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [logsRes, activitiesRes, commentsRes] = await Promise.all([
+      const [logsRes, activitiesRes, commentsRes, stravaRes] = await Promise.all([
         fetch(`/api/logs?date=${date}`),
         fetch(`/api/activities?date=${date}`),
         fetch(`/api/comments?date=${date}`),
+        fetch(`/api/strava/activities?date=${date}`),
       ]);
       const logsData = await logsRes.json();
       const activitiesData = await activitiesRes.json();
       const commentsData = await commentsRes.json();
+      const stravaData = await stravaRes.json();
       setUsers(logsData.users);
       setActivities(activitiesData.activities);
       setComments(commentsData.comments);
+      setStravaActivities(stravaData.activities || []);
+      setStravaConnectedUserIds(stravaData.connectedUserIds || []);
     } catch (err) {
       console.error('Failed to fetch data:', err);
     }
@@ -390,6 +409,8 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
               const total = user.exercises.length;
               const isOwn = user.id === currentUserId;
               const userActivities = activities.filter((a) => a.userId === user.id);
+              const userStravaActivities = stravaActivities.filter((a) => a.userId === user.id);
+              const userHasStrava = stravaConnectedUserIds.includes(user.id);
               const userComments = comments.filter((c) => c.targetUserId === user.id);
 
               return (
@@ -448,6 +469,12 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
                       onActivityClick={(type) => handleActivityClick(user.id, type)}
                     />
                   )}
+
+                  {/* Strava Activities */}
+                  <StravaSection
+                    activities={userStravaActivities}
+                    isConnected={userHasStrava}
+                  />
 
                   {/* Comments */}
                   <CommentSection

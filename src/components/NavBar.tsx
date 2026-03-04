@@ -7,7 +7,7 @@ import { useTheme } from '@/app/providers';
 
 interface NavBarProps {
   currentUserName: string;
-  active?: 'daily' | 'weekly';
+  active?: 'daily' | 'weekly' | 'strava';
 }
 
 export default function NavBar({ currentUserName, active }: NavBarProps) {
@@ -20,6 +20,7 @@ export default function NavBar({ currentUserName, active }: NavBarProps) {
   // Auto-detect active tab from pathname if not explicitly provided
   const currentTab = active ?? (
     pathname.startsWith('/weekly') ? 'weekly' :
+    pathname.startsWith('/strava') ? 'strava' :
     pathname.startsWith('/daily') ? 'daily' :
     pathname.startsWith('/settings') ? 'settings' :
     pathname === '/' ? 'home' : 'daily'
@@ -65,6 +66,19 @@ export default function NavBar({ currentUserName, active }: NavBarProps) {
               }`}
             >
               Weekly
+            </button>
+            <button
+              onClick={() => router.push('/strava')}
+              className={`px-3 sm:px-4 py-2.5 text-sm font-medium rounded-lg transition-colors touch-target flex items-center gap-1.5 ${
+                currentTab === 'strava'
+                  ? 'bg-orange-50 text-orange-700 dark:bg-orange-500/15 dark:text-orange-400'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-700/50'
+              }`}
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" />
+              </svg>
+              <span className="hidden sm:inline">Strava</span>
             </button>
           </nav>
         </div>
@@ -119,6 +133,12 @@ export default function NavBar({ currentUserName, active }: NavBarProps) {
                 className="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors"
               >
                 Notifications
+              </button>
+              <button
+                onClick={() => { router.push('/settings/strava'); setMenuOpen(false); }}
+                className="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors"
+              >
+                Strava
               </button>
               <div className="border-t border-gray-100 dark:border-slate-700/50 my-1" />
               <button

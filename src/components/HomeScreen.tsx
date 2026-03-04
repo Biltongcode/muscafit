@@ -24,7 +24,7 @@ export default function HomeScreen({ currentUserName }: HomeScreenProps) {
         </div>
 
         {/* Navigation Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 sm:mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 sm:mb-10">
           <button
             onClick={() => router.push('/daily')}
             className="glass rounded-2xl p-6 text-left hover:ring-2 hover:ring-blue-500/30 dark:hover:ring-blue-400/30 transition-all group touch-target"
@@ -60,6 +60,25 @@ export default function HomeScreen({ currentUserName }: HomeScreenProps) {
             </div>
             <p className="text-sm text-gray-500 dark:text-slate-400 leading-relaxed">
               See the full week at a glance with completion streaks and patterns.
+            </p>
+          </button>
+
+          <button
+            onClick={() => router.push('/strava')}
+            className="glass rounded-2xl p-6 text-left hover:ring-2 hover:ring-orange-500/30 dark:hover:ring-orange-400/30 transition-all group touch-target"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" />
+                </svg>
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                Strava
+              </h2>
+            </div>
+            <p className="text-sm text-gray-500 dark:text-slate-400 leading-relaxed">
+              View recent Strava activities for both Muscateers in one feed.
             </p>
           </button>
         </div>
