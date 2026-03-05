@@ -11,8 +11,8 @@ export async function GET() {
 
   const userId = Number(session.user.id);
   const user = db
-    .prepare('SELECT id, name, email FROM users WHERE id = ?')
-    .get(userId) as { id: number; name: string; email: string } | undefined;
+    .prepare('SELECT id, name, email, avatar_url as avatarUrl FROM users WHERE id = ?')
+    .get(userId) as { id: number; name: string; email: string; avatarUrl: string | null } | undefined;
 
   if (!user) {
     return NextResponse.json({ error: 'User not found' }, { status: 404 });
