@@ -116,6 +116,34 @@ db.exec(`
   );
 `);
 
+// Connections tables
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_connections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    connected_user_id INTEGER NOT NULL REFERENCES users(id),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, connected_user_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS connection_invites (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    inviter_id INTEGER NOT NULL REFERENCES users(id),
+    email TEXT NOT NULL,
+    token TEXT NOT NULL UNIQUE,
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Seed existing Duncan<->Fred connection (safe - UNIQUE constraint will prevent duplicates)
+try { db.exec("INSERT INTO user_connections (user_id, connected_user_id) VALUES (1, 2)"); } catch {}
+try { db.exec("INSERT INTO user_connections (user_id, connected_user_id) VALUES (2, 1)"); } catch {}
+
+// Safe migration: add created_by_id to goals
+try { db.exec('ALTER TABLE goals ADD COLUMN created_by_id INTEGER REFERENCES users(id)'); } catch {}
+try { db.exec("UPDATE goals SET created_by_id = 1 WHERE scope = 'group' AND created_by_id IS NULL"); } catch {}
+
 // Safe migration: add weekly summary columns to user_settings if missing
 try {
   db.exec(`ALTER TABLE user_settings ADD COLUMN weekly_summary_enabled BOOLEAN DEFAULT 1`);

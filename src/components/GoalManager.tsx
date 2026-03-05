@@ -289,7 +289,7 @@ export default function GoalManager({ currentUserName }: GoalManagerProps) {
                             scope === 'group' ? 'gradient-btn' : 'text-gray-600 dark:text-slate-400'
                           }`}
                         >
-                          Both of us
+                          Group
                         </button>
                       </div>
                     </div>

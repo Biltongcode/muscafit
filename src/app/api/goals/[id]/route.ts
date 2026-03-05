@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import db from '@/lib/db';
+import { getVisibleUserIds } from '@/lib/connections';
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
@@ -12,9 +13,9 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   const goalId = Number(params.id);
   const userId = Number(session.user.id);
 
-  // Verify the goal exists — individual goals must belong to this user, group goals anyone can delete
-  const goal = db.prepare('SELECT id, scope, user_id FROM goals WHERE id = ?').get(goalId) as
-    | { id: number; scope: string; user_id: number | null }
+  // Verify the goal exists — individual goals must belong to this user, group goals only creator can delete
+  const goal = db.prepare('SELECT id, scope, user_id, created_by_id FROM goals WHERE id = ?').get(goalId) as
+    | { id: number; scope: string; user_id: number | null; created_by_id: number | null }
     | undefined;
 
   if (!goal) {
@@ -22,6 +23,10 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   }
 
   if (goal.scope === 'individual' && goal.user_id !== userId) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  if (goal.scope === 'group' && goal.created_by_id !== userId) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

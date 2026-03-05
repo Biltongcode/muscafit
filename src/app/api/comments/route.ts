@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import db from '@/lib/db';
+import { getVisibleUserIds, inPlaceholders } from '@/lib/connections';
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -13,6 +14,9 @@ export async function GET(req: NextRequest) {
   if (!date) {
     return NextResponse.json({ error: 'date parameter required' }, { status: 400 });
   }
+
+  const sessionUserId = Number(session.user.id);
+  const visibleIds = getVisibleUserIds(sessionUserId);
 
   const targetUserId = req.nextUrl.searchParams.get('target_user_id');
 
@@ -27,9 +31,11 @@ export async function GET(req: NextRequest) {
          FROM comments c
          JOIN users u ON u.id = c.author_id
          WHERE c.comment_date = ? AND c.target_user_id = ?
+           AND c.target_user_id IN ${inPlaceholders(visibleIds)}
+           AND c.author_id IN ${inPlaceholders(visibleIds)}
          ORDER BY c.created_at ASC`
       )
-      .all(date, Number(targetUserId));
+      .all(date, Number(targetUserId), ...visibleIds, ...visibleIds);
   } else {
     comments = db
       .prepare(
@@ -40,9 +46,11 @@ export async function GET(req: NextRequest) {
          FROM comments c
          JOIN users u ON u.id = c.author_id
          WHERE c.comment_date = ?
+           AND c.target_user_id IN ${inPlaceholders(visibleIds)}
+           AND c.author_id IN ${inPlaceholders(visibleIds)}
          ORDER BY c.created_at ASC`
       )
-      .all(date);
+      .all(date, ...visibleIds, ...visibleIds);
   }
 
   return NextResponse.json({ comments });
@@ -62,6 +70,11 @@ export async function POST(req: NextRequest) {
   }
 
   const authorId = Number(session.user.id);
+  const visibleIds = getVisibleUserIds(authorId);
+
+  if (!visibleIds.includes(Number(targetUserId))) {
+    return NextResponse.json({ error: 'Cannot comment on unconnected user' }, { status: 403 });
+  }
 
   const result = db
     .prepare(

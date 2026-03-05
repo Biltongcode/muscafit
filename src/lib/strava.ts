@@ -168,7 +168,7 @@ export function getActivitiesForRange(startDate: string, endDate: string): Cache
   return rows.map(mapRow);
 }
 
-export function getConnectedUserIds(): number[] {
+export function getStravaConnectedUserIds(): number[] {
   const rows = db.prepare('SELECT user_id FROM strava_tokens').all() as { user_id: number }[];
   return rows.map((r) => r.user_id);
 }

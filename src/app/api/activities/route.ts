@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import db from '@/lib/db';
+import { getVisibleUserIds, inPlaceholders } from '@/lib/connections';
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -14,6 +15,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'date parameter required' }, { status: 400 });
   }
 
+  const sessionUserId = Number(session.user.id);
+  const visibleIds = getVisibleUserIds(sessionUserId);
+
   const activities = db
     .prepare(
       `SELECT a.id, a.user_id as userId, a.activity_type as activityType,
@@ -21,9 +25,10 @@ export async function GET(req: NextRequest) {
               a.notes, a.session_date as sessionDate
        FROM activity_sessions a
        WHERE a.session_date = ?
+         AND a.user_id IN ${inPlaceholders(visibleIds)}
        ORDER BY a.created_at`
     )
-    .all(date);
+    .all(date, ...visibleIds);
 
   return NextResponse.json({ activities });
 }

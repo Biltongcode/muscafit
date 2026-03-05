@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import db from '@/lib/db';
+import { getVisibleUserIds, inPlaceholders } from '@/lib/connections';
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -11,6 +12,9 @@ export async function GET(req: NextRequest) {
 
   const period = req.nextUrl.searchParams.get('period') || 'month';
   const { start, end } = getDateRange(period);
+
+  const sessionUserId = Number(session.user.id);
+  const visibleIds = getVisibleUserIds(sessionUserId);
 
   // Exercise totals grouped by exercise name and user
   const exerciseRows = db.prepare(`
@@ -25,9 +29,10 @@ export async function GET(req: NextRequest) {
     JOIN exercises e ON e.id = el.exercise_id
     JOIN users u ON u.id = el.user_id
     WHERE el.log_date >= ? AND el.log_date <= ?
+      AND el.user_id IN ${inPlaceholders(visibleIds)}
     GROUP BY e.name, el.user_id
     ORDER BY e.name, el.user_id
-  `).all(start, end) as Array<{
+  `).all(start, end, ...visibleIds) as Array<{
     exercise_name: string;
     target_type: string;
     user_id: number;
@@ -74,9 +79,10 @@ export async function GET(req: NextRequest) {
     FROM activity_sessions a
     JOIN users u ON u.id = a.user_id
     WHERE a.session_date >= ? AND a.session_date <= ?
+      AND a.user_id IN ${inPlaceholders(visibleIds)}
     GROUP BY a.user_id, a.activity_type
     ORDER BY u.name, a.activity_type
-  `).all(start, end) as Array<{
+  `).all(start, end, ...visibleIds) as Array<{
     user_id: number;
     user_name: string;
     activity_type: string;

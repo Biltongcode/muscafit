@@ -13,6 +13,7 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
 
   const callbackUrl = searchParams.get('callbackUrl') || '/';
+  const justRegistered = searchParams.get('registered') === '1';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,6 +45,11 @@ function LoginForm() {
         </div>
 
         <form onSubmit={handleSubmit} className="bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-glow-lg p-6 space-y-4">
+          {justRegistered && (
+            <div className="bg-green-500/10 border border-green-500/30 text-green-400 text-sm rounded-lg p-3">
+              Account created! Sign in to get started.
+            </div>
+          )}
           {error && (
             <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg p-3">
               {error}
@@ -87,6 +93,10 @@ function LoginForm() {
           >
             {loading ? 'Signing in...' : 'Sign in'}
           </button>
+
+          <p className="text-center text-sm text-slate-500">
+            Need an account? Ask a friend to invite you.
+          </p>
         </form>
       </div>
     </div>

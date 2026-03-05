@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import db from '@/lib/db';
+import { getVisibleUserIds, inPlaceholders } from '@/lib/connections';
 
 interface GoalRow {
   id: number;
@@ -12,6 +13,7 @@ interface GoalRow {
   target_value: number;
   year: number;
   month: number | null;
+  created_by_id: number | null;
 }
 
 function getGoalDateRange(goal: GoalRow): { start: string; end: string } {
@@ -25,7 +27,7 @@ function getGoalDateRange(goal: GoalRow): { start: string; end: string } {
   return { start: `${goal.year}-01-01`, end: `${goal.year}-12-31` };
 }
 
-function computeProgress(goal: GoalRow): number {
+function computeProgress(goal: GoalRow, visibleIds: number[]): number {
   const { start, end } = getGoalDateRange(goal);
 
   if (goal.scope === 'group') {
@@ -39,7 +41,8 @@ function computeProgress(goal: GoalRow): number {
       JOIN exercises e ON e.id = el.exercise_id
       WHERE LOWER(TRIM(e.name)) = LOWER(TRIM(?))
         AND el.log_date >= ? AND el.log_date <= ?
-    `).get(goal.exercise_name, start, end) as { current_value: number };
+        AND el.user_id IN ${inPlaceholders(visibleIds)}
+    `).get(goal.exercise_name, start, end, ...visibleIds) as { current_value: number };
     return result.current_value;
   }
 
@@ -65,15 +68,20 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const sessionUserId = Number(session.user.id);
+  const visibleIds = getVisibleUserIds(sessionUserId);
+
   const goals = db.prepare(`
     SELECT g.*, u.name as user_name
     FROM goals g
     LEFT JOIN users u ON u.id = g.user_id
+    WHERE (g.scope = 'individual' AND g.user_id = ?)
+       OR (g.scope = 'group' AND g.created_by_id IN ${inPlaceholders(visibleIds)})
     ORDER BY g.year DESC, g.month DESC NULLS FIRST, g.exercise_name
-  `).all() as Array<GoalRow & { user_name: string | null }>;
+  `).all(sessionUserId, ...visibleIds) as Array<GoalRow & { user_name: string | null }>;
 
   const goalsWithProgress = goals.map(goal => {
-    const currentValue = computeProgress(goal);
+    const currentValue = computeProgress(goal, visibleIds);
     const percent = goal.target_value > 0 ? Math.min(100, Math.round((currentValue / goal.target_value) * 100)) : 0;
 
     return {
@@ -118,9 +126,9 @@ export async function POST(req: NextRequest) {
   const userId = scope === 'individual' ? Number(session.user.id) : null;
 
   const result = db.prepare(`
-    INSERT INTO goals (exercise_name, goal_type, scope, user_id, target_value, year, month)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `).run(exerciseName, goalType, scope, userId, targetValue, year, month || null);
+    INSERT INTO goals (exercise_name, goal_type, scope, user_id, target_value, year, month, created_by_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(exerciseName, goalType, scope, userId, targetValue, year, month || null, Number(session.user.id));
 
   return NextResponse.json({ id: result.lastInsertRowid }, { status: 201 });
 }

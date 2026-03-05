@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import { Resend } from 'resend';
 import db from './db';
+import { getConnectedUserIds, getVisibleUserIds, inPlaceholders } from './connections';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.NOTIFICATION_FROM || 'Muscafit <onboarding@resend.dev>';
@@ -139,8 +140,9 @@ async function sendMorningSummaries() {
 
     if (!enabled || !morningEnabled || currentHour !== summaryHour) continue;
 
-    // Get other users' data for yesterday
-    const otherUsers = users.filter((u) => u.id !== user.id);
+    // Get connected users' data for yesterday (only people this user is connected to)
+    const connectedIds = getConnectedUserIds(user.id);
+    const otherUsers = users.filter((u) => connectedIds.includes(u.id));
     const summaryParts: string[] = [];
 
     for (const other of otherUsers) {
@@ -260,7 +262,6 @@ async function sendWeeklySummaries() {
   const users = getUsersWithSettings();
   const currentHour = now.getHours();
   const { start, end } = getWeekRange();
-  const allUsers = db.prepare('SELECT id, name FROM users').all() as Array<{ id: number; name: string }>;
 
   for (const user of users) {
     const enabled = user.notifications_enabled ?? 1;
@@ -271,9 +272,13 @@ async function sendWeeklySummaries() {
 
     const toEmail = user.notification_email || user.email;
 
+    // Get visible users for this specific user (self + connections)
+    const visibleIds = getVisibleUserIds(user.id);
+    const visibleUsers = db.prepare(`SELECT id, name FROM users WHERE id IN ${inPlaceholders(visibleIds)}`).all(...visibleIds) as Array<{ id: number; name: string }>;
+
     // Build per-user exercise stats
     const userSections: string[] = [];
-    for (const u of allUsers) {
+    for (const u of visibleUsers) {
       const exercises = db.prepare(`
         SELECT e.name,
           COUNT(CASE WHEN el.completed = 1 THEN 1 END) as days_done,
@@ -327,10 +332,14 @@ async function sendWeeklySummaries() {
       userSections.push(section);
     }
 
-    // Goals progress
-    const goals = db.prepare('SELECT * FROM goals').all() as Array<{
+    // Goals progress — only show goals relevant to this user
+    const goals = db.prepare(`
+      SELECT * FROM goals
+      WHERE (scope = 'individual' AND user_id = ?)
+         OR (scope = 'group' AND created_by_id IN ${inPlaceholders(visibleIds)})
+    `).all(user.id, ...visibleIds) as Array<{
       id: number; exercise_name: string; goal_type: string; scope: string;
-      user_id: number | null; target_value: number; year: number; month: number | null;
+      user_id: number | null; created_by_id: number | null; target_value: number; year: number; month: number | null;
     }>;
 
     let goalsHtml = '';
@@ -349,11 +358,13 @@ async function sendWeeklySummaries() {
 
         let currentValue: number;
         if (goal.scope === 'group') {
+          // Group goals: only aggregate from visible users
           const row = db.prepare(`
             SELECT SUM(CASE WHEN el.completed = 1 THEN COALESCE(el.actual_value, e.target_value, 0) ELSE 0 END) as total
             FROM exercise_logs el JOIN exercises e ON e.id = el.exercise_id
             WHERE LOWER(TRIM(e.name)) = LOWER(TRIM(?)) AND el.log_date >= ? AND el.log_date <= ?
-          `).get(goal.exercise_name, goalStart, goalEnd) as { total: number | null };
+              AND el.user_id IN ${inPlaceholders(visibleIds)}
+          `).get(goal.exercise_name, goalStart, goalEnd, ...visibleIds) as { total: number | null };
           currentValue = row?.total || 0;
         } else {
           const row = db.prepare(`
@@ -366,7 +377,7 @@ async function sendWeeklySummaries() {
 
         const pct = Math.min(100, Math.round((currentValue / goal.target_value) * 100));
         const barColor = pct >= 100 ? '#16a34a' : pct >= 50 ? '#2563eb' : '#d97706';
-        const scopeLabel = goal.scope === 'group' ? 'Group' : (allUsers.find(u => u.id === goal.user_id)?.name || 'Individual');
+        const scopeLabel = goal.scope === 'group' ? 'Group' : (visibleUsers.find(u => u.id === goal.user_id)?.name || 'Individual');
         const periodLabel = goal.goal_type === 'monthly' && goal.month
           ? `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][goal.month - 1]} ${goal.year}`
           : `${goal.year}`;
@@ -434,10 +445,11 @@ export async function sendTestEmail(userId: number, type: 'evening' | 'morning' 
   if (type === 'weekly') {
     const today = getTodayStr();
     const { start } = getWeekRange();
-    const allUsers = db.prepare('SELECT id, name FROM users').all() as Array<{ id: number; name: string }>;
+    const visibleIds = getVisibleUserIds(user.id);
+    const visibleUsers = db.prepare(`SELECT id, name FROM users WHERE id IN ${inPlaceholders(visibleIds)}`).all(...visibleIds) as Array<{ id: number; name: string }>;
 
     const userSections: string[] = [];
-    for (const u of allUsers) {
+    for (const u of visibleUsers) {
       const exercises = db.prepare(`
         SELECT e.name,
           COUNT(CASE WHEN el.completed = 1 THEN 1 END) as days_done,
@@ -549,8 +561,8 @@ export async function sendTestEmail(userId: number, type: 'evening' | 'morning' 
 
   // Morning summary test — use today's data instead of yesterday's
   const today = getTodayStr();
-  const allUsers = db.prepare('SELECT id, name FROM users').all() as Array<{ id: number; name: string }>;
-  const otherUsers = allUsers.filter((u) => u.id !== user.id);
+  const connectedIds = getConnectedUserIds(user.id);
+  const otherUsers = db.prepare(`SELECT id, name FROM users WHERE id IN ${inPlaceholders(connectedIds.length > 0 ? connectedIds : [0])}`).all(...(connectedIds.length > 0 ? connectedIds : [0])) as Array<{ id: number; name: string }>;
 
   const summaryParts: string[] = [];
   for (const other of otherUsers) {

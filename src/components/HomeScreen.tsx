@@ -19,7 +19,7 @@ export default function HomeScreen({ currentUserName }: HomeScreenProps) {
         <div className="text-center mb-8 sm:mb-10">
           <h1 className="text-3xl sm:text-4xl font-bold gradient-text mb-2">Muscafit</h1>
           <p className="text-gray-500 dark:text-slate-400 text-sm sm:text-base">
-            Strength training accountability for Muscateers.
+            Strength training accountability with your connections.
           </p>
         </div>
 
@@ -78,7 +78,7 @@ export default function HomeScreen({ currentUserName }: HomeScreenProps) {
               </h2>
             </div>
             <p className="text-sm text-gray-500 dark:text-slate-400 leading-relaxed">
-              View recent Strava activities for both Muscateers in one feed.
+              View recent Strava activities for you and your connections in one feed.
             </p>
           </button>
 
@@ -126,7 +126,7 @@ export default function HomeScreen({ currentUserName }: HomeScreenProps) {
             <li className="flex items-start gap-3">
               <span className="mt-0.5 w-6 h-6 rounded-full bg-blue-500/10 dark:bg-blue-400/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">3</span>
               <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
-                <strong>Leave comments</strong> to motivate (or berate) each other. Open the comment section at the bottom of each user card.
+                <strong>Leave comments</strong> to motivate your connections. Open the comment section at the bottom of each user card.
               </p>
             </li>
             <li className="flex items-start gap-3">

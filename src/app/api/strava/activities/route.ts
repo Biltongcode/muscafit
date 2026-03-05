@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { getConnectedUserIds, syncUserActivities, getActivitiesForDate } from '@/lib/strava';
+import { getStravaConnectedUserIds, syncUserActivities, getActivitiesForDate } from '@/lib/strava';
+import { getVisibleUserIds } from '@/lib/connections';
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -15,7 +16,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'date parameter required' }, { status: 400 });
   }
 
-  const connectedUserIds = getConnectedUserIds();
+  const sessionUserId = Number(session.user.id);
+  const visibleIds = getVisibleUserIds(sessionUserId);
+  const stravaUserIds = getStravaConnectedUserIds();
+  const connectedUserIds = stravaUserIds.filter(id => visibleIds.includes(id));
 
   // Trigger sync for each connected user (respects cooldown internally)
   await Promise.all(connectedUserIds.map((uid) => syncUserActivities(uid)));

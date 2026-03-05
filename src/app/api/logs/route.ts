@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import db from '@/lib/db';
+import { getVisibleUserIds, inPlaceholders } from '@/lib/connections';
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -14,8 +15,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'date parameter required' }, { status: 400 });
   }
 
+  const sessionUserId = Number(session.user.id);
+  const visibleIds = getVisibleUserIds(sessionUserId);
+
   // Get all users
-  const allUsers = db.prepare('SELECT id, name, avatar_url FROM users').all() as Array<{ id: number; name: string; avatar_url: string | null }>;
+  const allUsers = db.prepare(`SELECT id, name, avatar_url FROM users WHERE id IN ${inPlaceholders(visibleIds)}`).all(...visibleIds) as Array<{ id: number; name: string; avatar_url: string | null }>;
 
   // For each user, auto-generate log entries for active exercises that don't have one
   const insertLog = db.prepare(
@@ -63,10 +67,11 @@ export async function GET(req: NextRequest) {
      FROM exercise_logs el
      JOIN exercises e ON e.id = el.exercise_id
      WHERE el.log_date = ? AND e.is_active = 1
+       AND el.user_id IN ${inPlaceholders(visibleIds)}
      ORDER BY e.sort_order`
   );
 
-  const allLogs = getLogs.all(date) as Array<{
+  const allLogs = getLogs.all(date, ...visibleIds) as Array<{
     log_id: number;
     user_id: number;
     exercise_id: number;

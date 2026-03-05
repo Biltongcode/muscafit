@@ -160,6 +160,12 @@ export default function NavBar({ currentUserName, active }: NavBarProps) {
               >
                 Strava
               </button>
+              <button
+                onClick={() => { router.push('/settings/connections'); setMenuOpen(false); }}
+                className="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors"
+              >
+                Connections
+              </button>
               <div className="border-t border-gray-100 dark:border-slate-700/50 my-1" />
               <button
                 onClick={() => signOut()}

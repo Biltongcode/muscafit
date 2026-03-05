@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { getConnectedUserIds, syncUserActivities, getActivitiesForRange } from '@/lib/strava';
+import { getStravaConnectedUserIds, syncUserActivities, getActivitiesForRange } from '@/lib/strava';
+import { getVisibleUserIds } from '@/lib/connections';
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -12,7 +13,10 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const days = Math.min(Number(searchParams.get('days') || 14), 30);
 
-  const connectedUserIds = getConnectedUserIds();
+  const sessionUserId = Number(session.user.id);
+  const visibleIds = getVisibleUserIds(sessionUserId);
+  const stravaUserIds = getStravaConnectedUserIds();
+  const connectedUserIds = stravaUserIds.filter(id => visibleIds.includes(id));
 
   // Trigger sync for each connected user
   await Promise.all(connectedUserIds.map((uid) => syncUserActivities(uid)));
