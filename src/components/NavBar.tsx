@@ -7,7 +7,7 @@ import { useTheme } from '@/app/providers';
 
 interface NavBarProps {
   currentUserName: string;
-  active?: 'daily' | 'weekly' | 'strava';
+  active?: 'daily' | 'weekly' | 'stats' | 'strava';
 }
 
 export default function NavBar({ currentUserName, active }: NavBarProps) {
@@ -20,6 +20,7 @@ export default function NavBar({ currentUserName, active }: NavBarProps) {
   // Auto-detect active tab from pathname if not explicitly provided
   const currentTab = active ?? (
     pathname.startsWith('/weekly') ? 'weekly' :
+    pathname.startsWith('/stats') ? 'stats' :
     pathname.startsWith('/strava') ? 'strava' :
     pathname.startsWith('/daily') ? 'daily' :
     pathname.startsWith('/settings') ? 'settings' :
@@ -66,6 +67,19 @@ export default function NavBar({ currentUserName, active }: NavBarProps) {
               }`}
             >
               Weekly
+            </button>
+            <button
+              onClick={() => router.push('/stats')}
+              className={`px-3 sm:px-4 py-2.5 text-sm font-medium rounded-lg transition-colors touch-target flex items-center gap-1.5 ${
+                currentTab === 'stats'
+                  ? 'bg-purple-50 text-purple-700 dark:bg-purple-500/15 dark:text-purple-400'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-700/50'
+              }`}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <span className="hidden sm:inline">Stats</span>
             </button>
             <button
               onClick={() => router.push('/strava')}
@@ -133,6 +147,12 @@ export default function NavBar({ currentUserName, active }: NavBarProps) {
                 className="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors"
               >
                 Notifications
+              </button>
+              <button
+                onClick={() => { router.push('/settings/goals'); setMenuOpen(false); }}
+                className="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors"
+              >
+                Goals
               </button>
               <button
                 onClick={() => { router.push('/settings/strava'); setMenuOpen(false); }}

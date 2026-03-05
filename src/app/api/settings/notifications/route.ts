@@ -9,6 +9,8 @@ interface Settings {
   evening_reminder_hour: number;
   morning_summary_enabled: number;
   morning_summary_hour: number;
+  weekly_summary_enabled: number;
+  weekly_summary_hour: number;
   notification_email: string | null;
 }
 
@@ -18,6 +20,8 @@ const DEFAULTS: Settings = {
   evening_reminder_hour: 20,
   morning_summary_enabled: 1,
   morning_summary_hour: 7,
+  weekly_summary_enabled: 1,
+  weekly_summary_hour: 18,
   notification_email: null,
 };
 
@@ -43,6 +47,8 @@ export async function GET() {
       evening_reminder_hour: row.evening_reminder_hour,
       morning_summary_enabled: row.morning_summary_enabled,
       morning_summary_hour: row.morning_summary_hour,
+      weekly_summary_enabled: row.weekly_summary_enabled ?? DEFAULTS.weekly_summary_enabled,
+      weekly_summary_hour: row.weekly_summary_hour ?? DEFAULTS.weekly_summary_hour,
       notification_email: row.notification_email,
     },
   });
@@ -63,19 +69,24 @@ export async function PUT(req: NextRequest) {
     evening_reminder_hour: body.evening_reminder_hour ?? DEFAULTS.evening_reminder_hour,
     morning_summary_enabled: body.morning_summary_enabled ?? DEFAULTS.morning_summary_enabled,
     morning_summary_hour: body.morning_summary_hour ?? DEFAULTS.morning_summary_hour,
+    weekly_summary_enabled: body.weekly_summary_enabled ?? DEFAULTS.weekly_summary_enabled,
+    weekly_summary_hour: body.weekly_summary_hour ?? DEFAULTS.weekly_summary_hour,
     notification_email: body.notification_email || null,
   };
 
   db.prepare(`
     INSERT INTO user_settings (user_id, notifications_enabled, evening_reminder_enabled,
-      evening_reminder_hour, morning_summary_enabled, morning_summary_hour, notification_email, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      evening_reminder_hour, morning_summary_enabled, morning_summary_hour,
+      weekly_summary_enabled, weekly_summary_hour, notification_email, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     ON CONFLICT(user_id) DO UPDATE SET
       notifications_enabled = excluded.notifications_enabled,
       evening_reminder_enabled = excluded.evening_reminder_enabled,
       evening_reminder_hour = excluded.evening_reminder_hour,
       morning_summary_enabled = excluded.morning_summary_enabled,
       morning_summary_hour = excluded.morning_summary_hour,
+      weekly_summary_enabled = excluded.weekly_summary_enabled,
+      weekly_summary_hour = excluded.weekly_summary_hour,
       notification_email = excluded.notification_email,
       updated_at = CURRENT_TIMESTAMP
   `).run(
@@ -85,6 +96,8 @@ export async function PUT(req: NextRequest) {
     settings.evening_reminder_hour,
     settings.morning_summary_enabled,
     settings.morning_summary_hour,
+    settings.weekly_summary_enabled,
+    settings.weekly_summary_hour,
     settings.notification_email
   );
 

@@ -10,10 +10,10 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const type = body.type as 'evening' | 'morning';
+  const type = body.type as 'evening' | 'morning' | 'weekly';
 
-  if (!type || !['evening', 'morning'].includes(type)) {
-    return NextResponse.json({ error: 'type must be "evening" or "morning"' }, { status: 400 });
+  if (!type || !['evening', 'morning', 'weekly'].includes(type)) {
+    return NextResponse.json({ error: 'type must be "evening", "morning", or "weekly"' }, { status: 400 });
   }
 
   try {

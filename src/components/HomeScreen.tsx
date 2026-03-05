@@ -24,7 +24,7 @@ export default function HomeScreen({ currentUserName }: HomeScreenProps) {
         </div>
 
         {/* Navigation Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 sm:mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 sm:mb-10">
           <button
             onClick={() => router.push('/daily')}
             className="glass rounded-2xl p-6 text-left hover:ring-2 hover:ring-blue-500/30 dark:hover:ring-blue-400/30 transition-all group touch-target"
@@ -79,6 +79,25 @@ export default function HomeScreen({ currentUserName }: HomeScreenProps) {
             </div>
             <p className="text-sm text-gray-500 dark:text-slate-400 leading-relaxed">
               View recent Strava activities for both Muscateers in one feed.
+            </p>
+          </button>
+
+          <button
+            onClick={() => router.push('/stats')}
+            className="glass rounded-2xl p-6 text-left hover:ring-2 hover:ring-purple-500/30 dark:hover:ring-purple-400/30 transition-all group touch-target"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                Stats & Goals
+              </h2>
+            </div>
+            <p className="text-sm text-gray-500 dark:text-slate-400 leading-relaxed">
+              Track totals, set goals, and see your progress over time.
             </p>
           </button>
         </div>

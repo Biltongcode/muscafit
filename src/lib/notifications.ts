@@ -24,6 +24,8 @@ interface UserWithSettings {
   evening_reminder_hour: number | null;
   morning_summary_enabled: number | null;
   morning_summary_hour: number | null;
+  weekly_summary_enabled: number | null;
+  weekly_summary_hour: number | null;
   notification_email: string | null;
 }
 
@@ -43,7 +45,8 @@ function getUsersWithSettings(): UserWithSettings[] {
     SELECT u.id, u.name, u.email,
            us.notifications_enabled, us.evening_reminder_enabled,
            us.evening_reminder_hour, us.morning_summary_enabled,
-           us.morning_summary_hour, us.notification_email
+           us.morning_summary_hour, us.weekly_summary_enabled,
+           us.weekly_summary_hour, us.notification_email
     FROM users u
     LEFT JOIN user_settings us ON u.id = us.user_id
   `).all() as UserWithSettings[];
@@ -236,8 +239,186 @@ async function sendMorningSummaries() {
   }
 }
 
+// --- Weekly Summary ---
+// Sent on Sundays, shows the week's exercise totals, activities, and goal progress
+
+function getWeekRange(): { start: string; end: string } {
+  const now = new Date();
+  const day = now.getDay(); // 0=Sun
+  const mon = new Date(now);
+  mon.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
+  const sun = new Date(mon);
+  sun.setDate(mon.getDate() + 6);
+  const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return { start: fmt(mon), end: fmt(sun) };
+}
+
+async function sendWeeklySummaries() {
+  const now = new Date();
+  if (now.getDay() !== 0) return; // Only run on Sundays
+
+  const users = getUsersWithSettings();
+  const currentHour = now.getHours();
+  const { start, end } = getWeekRange();
+  const allUsers = db.prepare('SELECT id, name FROM users').all() as Array<{ id: number; name: string }>;
+
+  for (const user of users) {
+    const enabled = user.notifications_enabled ?? 1;
+    const weeklyEnabled = user.weekly_summary_enabled ?? 1;
+    const summaryHour = user.weekly_summary_hour ?? 18;
+
+    if (!enabled || !weeklyEnabled || currentHour !== summaryHour) continue;
+
+    const toEmail = user.notification_email || user.email;
+
+    // Build per-user exercise stats
+    const userSections: string[] = [];
+    for (const u of allUsers) {
+      const exercises = db.prepare(`
+        SELECT e.name,
+          COUNT(CASE WHEN el.completed = 1 THEN 1 END) as days_done,
+          COUNT(*) as days_total,
+          SUM(CASE WHEN el.completed = 1 THEN COALESCE(el.actual_value, e.target_value, 0) ELSE 0 END) as total_value,
+          e.target_type
+        FROM exercise_logs el
+        JOIN exercises e ON e.id = el.exercise_id
+        WHERE el.user_id = ? AND el.log_date >= ? AND el.log_date <= ?
+        GROUP BY e.name
+        ORDER BY e.name
+      `).all(u.id, start, end) as Array<{ name: string; days_done: number; days_total: number; total_value: number; target_type: string }>;
+
+      const activities = db.prepare(`
+        SELECT activity_type, COUNT(*) as count, SUM(duration_minutes) as total_mins
+        FROM activity_sessions
+        WHERE user_id = ? AND session_date >= ? AND session_date <= ?
+        GROUP BY activity_type
+      `).all(u.id, start, end) as Array<{ activity_type: string; count: number; total_mins: number | null }>;
+
+      let section = `<h3 style="color: #1a1a1a; margin: 16px 0 8px; font-size: 16px;">${escapeHtml(u.name)}</h3>`;
+
+      if (exercises.length > 0) {
+        section += `<table style="width: 100%; border-collapse: collapse; font-size: 14px;">`;
+        for (const ex of exercises) {
+          const pct = ex.days_total > 0 ? Math.round((ex.days_done / ex.days_total) * 100) : 0;
+          const color = pct === 100 ? '#16a34a' : pct >= 50 ? '#d97706' : '#ef4444';
+          const valueStr = ex.target_type === 'time'
+            ? `${Math.floor(ex.total_value / 60)}h ${ex.total_value % 60}m`
+            : `${ex.total_value.toLocaleString()} reps`;
+          section += `
+            <tr>
+              <td style="padding: 4px 0; color: #374151;">${escapeHtml(ex.name)}</td>
+              <td style="padding: 4px 8px; color: ${color}; font-weight: 600; text-align: right;">${ex.days_done}/${ex.days_total} days</td>
+              <td style="padding: 4px 0; color: #6b7280; text-align: right;">${valueStr}</td>
+            </tr>`;
+        }
+        section += `</table>`;
+      } else {
+        section += `<p style="color: #9ca3af; font-size: 14px; margin: 4px 0;">No exercise logs this week</p>`;
+      }
+
+      if (activities.length > 0) {
+        const actStrs = activities.map(a => {
+          const label = a.activity_type.charAt(0).toUpperCase() + a.activity_type.slice(1);
+          return a.total_mins ? `${label} x${a.count} (${a.total_mins}min)` : `${label} x${a.count}`;
+        });
+        section += `<p style="color: #4a4a4a; font-size: 14px; margin: 8px 0 0;">\u{1F3C3} ${actStrs.join(', ')}</p>`;
+      }
+
+      userSections.push(section);
+    }
+
+    // Goals progress
+    const goals = db.prepare('SELECT * FROM goals').all() as Array<{
+      id: number; exercise_name: string; goal_type: string; scope: string;
+      user_id: number | null; target_value: number; year: number; month: number | null;
+    }>;
+
+    let goalsHtml = '';
+    if (goals.length > 0) {
+      goalsHtml = `<h3 style="color: #1a1a1a; margin: 20px 0 8px; font-size: 16px;">\u{1F3AF} Goals</h3>`;
+      for (const goal of goals) {
+        let goalStart: string, goalEnd: string;
+        if (goal.goal_type === 'monthly' && goal.month) {
+          const lastDay = new Date(goal.year, goal.month, 0).getDate();
+          goalStart = `${goal.year}-${String(goal.month).padStart(2, '0')}-01`;
+          goalEnd = `${goal.year}-${String(goal.month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+        } else {
+          goalStart = `${goal.year}-01-01`;
+          goalEnd = `${goal.year}-12-31`;
+        }
+
+        let currentValue: number;
+        if (goal.scope === 'group') {
+          const row = db.prepare(`
+            SELECT SUM(CASE WHEN el.completed = 1 THEN COALESCE(el.actual_value, e.target_value, 0) ELSE 0 END) as total
+            FROM exercise_logs el JOIN exercises e ON e.id = el.exercise_id
+            WHERE LOWER(TRIM(e.name)) = LOWER(TRIM(?)) AND el.log_date >= ? AND el.log_date <= ?
+          `).get(goal.exercise_name, goalStart, goalEnd) as { total: number | null };
+          currentValue = row?.total || 0;
+        } else {
+          const row = db.prepare(`
+            SELECT SUM(CASE WHEN el.completed = 1 THEN COALESCE(el.actual_value, e.target_value, 0) ELSE 0 END) as total
+            FROM exercise_logs el JOIN exercises e ON e.id = el.exercise_id
+            WHERE LOWER(TRIM(e.name)) = LOWER(TRIM(?)) AND el.user_id = ? AND el.log_date >= ? AND el.log_date <= ?
+          `).get(goal.exercise_name, goal.user_id, goalStart, goalEnd) as { total: number | null };
+          currentValue = row?.total || 0;
+        }
+
+        const pct = Math.min(100, Math.round((currentValue / goal.target_value) * 100));
+        const barColor = pct >= 100 ? '#16a34a' : pct >= 50 ? '#2563eb' : '#d97706';
+        const scopeLabel = goal.scope === 'group' ? 'Group' : (allUsers.find(u => u.id === goal.user_id)?.name || 'Individual');
+        const periodLabel = goal.goal_type === 'monthly' && goal.month
+          ? `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][goal.month - 1]} ${goal.year}`
+          : `${goal.year}`;
+
+        goalsHtml += `
+          <div style="margin: 8px 0;">
+            <p style="color: #374151; font-size: 14px; margin: 0 0 4px;">
+              <strong>${escapeHtml(goal.exercise_name)}</strong>
+              <span style="color: #9ca3af;"> \u00b7 ${scopeLabel} \u00b7 ${periodLabel}</span>
+            </p>
+            <div style="background: #e5e7eb; border-radius: 4px; height: 8px; overflow: hidden;">
+              <div style="background: ${barColor}; height: 100%; width: ${pct}%; border-radius: 4px;"></div>
+            </div>
+            <p style="color: #6b7280; font-size: 12px; margin: 2px 0 0;">
+              ${currentValue.toLocaleString()} / ${goal.target_value.toLocaleString()} (${pct}%)
+            </p>
+          </div>`;
+      }
+    }
+
+    const weekFormatted = `${new Date(start + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} \u2013 ${new Date(end + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+
+    try {
+      await resend.emails.send({
+        from: FROM,
+        to: toEmail,
+        subject: `\u{1F4CA} Weekly training summary \u2013 ${weekFormatted}`,
+        html: `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #1a1a1a; margin-bottom: 4px;">Weekly Summary</h2>
+            <p style="color: #6b7280; margin-top: 0;">${weekFormatted}</p>
+            ${userSections.join('<hr style="border: none; border-top: 1px solid #e5e7eb; margin: 16px 0;">')}
+            ${goalsHtml}
+            <a href="${APP_URL}/stats"
+               style="display: inline-block; margin-top: 20px; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
+              View Full Stats
+            </a>
+            <p style="color: #999; font-size: 12px; margin-top: 24px;">
+              Sent by Muscafit. You can turn off weekly summaries in your settings.
+            </p>
+          </div>
+        `,
+      });
+      console.log(`[Muscafit] Weekly summary sent to ${user.name} (${toEmail})`);
+    } catch (err) {
+      console.error(`[Muscafit] Failed to send weekly summary to ${user.name}:`, err);
+    }
+  }
+}
+
 // --- Manual test endpoint helper ---
-export async function sendTestEmail(userId: number, type: 'evening' | 'morning') {
+export async function sendTestEmail(userId: number, type: 'evening' | 'morning' | 'weekly') {
   const user = db.prepare(`
     SELECT u.id, u.name, u.email,
            us.notification_email
@@ -249,6 +430,86 @@ export async function sendTestEmail(userId: number, type: 'evening' | 'morning')
   if (!user) throw new Error('User not found');
 
   const toEmail = user.notification_email || user.email;
+
+  if (type === 'weekly') {
+    const today = getTodayStr();
+    const { start } = getWeekRange();
+    const allUsers = db.prepare('SELECT id, name FROM users').all() as Array<{ id: number; name: string }>;
+
+    const userSections: string[] = [];
+    for (const u of allUsers) {
+      const exercises = db.prepare(`
+        SELECT e.name,
+          COUNT(CASE WHEN el.completed = 1 THEN 1 END) as days_done,
+          COUNT(*) as days_total,
+          SUM(CASE WHEN el.completed = 1 THEN COALESCE(el.actual_value, e.target_value, 0) ELSE 0 END) as total_value,
+          e.target_type
+        FROM exercise_logs el
+        JOIN exercises e ON e.id = el.exercise_id
+        WHERE el.user_id = ? AND el.log_date >= ? AND el.log_date <= ?
+        GROUP BY e.name ORDER BY e.name
+      `).all(u.id, start, today) as Array<{ name: string; days_done: number; days_total: number; total_value: number; target_type: string }>;
+
+      const activities = db.prepare(`
+        SELECT activity_type, COUNT(*) as count, SUM(duration_minutes) as total_mins
+        FROM activity_sessions
+        WHERE user_id = ? AND session_date >= ? AND session_date <= ?
+        GROUP BY activity_type
+      `).all(u.id, start, today) as Array<{ activity_type: string; count: number; total_mins: number | null }>;
+
+      let section = `<h3 style="color: #1a1a1a; margin: 16px 0 8px; font-size: 16px;">${escapeHtml(u.name)}</h3>`;
+      if (exercises.length > 0) {
+        section += `<table style="width: 100%; border-collapse: collapse; font-size: 14px;">`;
+        for (const ex of exercises) {
+          const pct = ex.days_total > 0 ? Math.round((ex.days_done / ex.days_total) * 100) : 0;
+          const color = pct === 100 ? '#16a34a' : pct >= 50 ? '#d97706' : '#ef4444';
+          const valueStr = ex.target_type === 'time'
+            ? `${Math.floor(ex.total_value / 60)}h ${ex.total_value % 60}m`
+            : `${ex.total_value.toLocaleString()} reps`;
+          section += `<tr>
+            <td style="padding: 4px 0; color: #374151;">${escapeHtml(ex.name)}</td>
+            <td style="padding: 4px 8px; color: ${color}; font-weight: 600; text-align: right;">${ex.days_done}/${ex.days_total} days</td>
+            <td style="padding: 4px 0; color: #6b7280; text-align: right;">${valueStr}</td>
+          </tr>`;
+        }
+        section += `</table>`;
+      } else {
+        section += `<p style="color: #9ca3af; font-size: 14px;">No exercise logs this week</p>`;
+      }
+      if (activities.length > 0) {
+        const actStrs = activities.map(a => {
+          const label = a.activity_type.charAt(0).toUpperCase() + a.activity_type.slice(1);
+          return a.total_mins ? `${label} x${a.count} (${a.total_mins}min)` : `${label} x${a.count}`;
+        });
+        section += `<p style="color: #4a4a4a; font-size: 14px; margin: 8px 0 0;">\u{1F3C3} ${actStrs.join(', ')}</p>`;
+      }
+      userSections.push(section);
+    }
+
+    const weekFormatted = `${new Date(start + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} \u2013 ${new Date(today + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+
+    await resend.emails.send({
+      from: FROM,
+      to: toEmail,
+      subject: `\u{1F4CA} Weekly training summary (test)`,
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #1a1a1a; margin-bottom: 4px;">Weekly Summary (Test)</h2>
+          <p style="color: #6b7280; margin-top: 0;">${weekFormatted}</p>
+          ${userSections.join('<hr style="border: none; border-top: 1px solid #e5e7eb; margin: 16px 0;">')}
+          <a href="${APP_URL}/stats"
+             style="display: inline-block; margin-top: 20px; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
+            View Full Stats
+          </a>
+          <p style="color: #999; font-size: 12px; margin-top: 24px;">
+            This is a test email from Muscafit.
+          </p>
+        </div>
+      `,
+    });
+
+    return { sent: true, to: toEmail };
+  }
 
   if (type === 'evening') {
     const today = getTodayStr();
@@ -347,6 +608,11 @@ export function startNotificationCrons() {
       await sendMorningSummaries();
     } catch (err) {
       console.error('[Muscafit] Morning summary error:', err);
+    }
+    try {
+      await sendWeeklySummaries();
+    } catch (err) {
+      console.error('[Muscafit] Weekly summary error:', err);
     }
   });
 

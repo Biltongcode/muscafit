@@ -14,6 +14,8 @@ interface Settings {
   evening_reminder_hour: number;
   morning_summary_enabled: number;
   morning_summary_hour: number;
+  weekly_summary_enabled: number;
+  weekly_summary_hour: number;
   notification_email: string | null;
 }
 
@@ -61,7 +63,7 @@ export default function NotificationSettings({ currentUserName }: NotificationSe
     setSaving(false);
   };
 
-  const sendTestEmail = async (type: 'evening' | 'morning') => {
+  const sendTestEmail = async (type: 'evening' | 'morning' | 'weekly') => {
     setTestSending(type);
     setMessage(null);
 
@@ -194,6 +196,37 @@ export default function NotificationSettings({ currentUserName }: NotificationSe
               </div>
             )}
           </div>
+
+          {/* Weekly summary */}
+          <div className={`px-4 py-4 ${allDisabled ? 'opacity-40' : ''}`}>
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <div className="font-medium text-gray-900 dark:text-slate-100">Weekly Summary</div>
+                <div className="text-sm text-gray-500 dark:text-slate-400">Week&apos;s training summary every Sunday</div>
+              </div>
+              <Toggle
+                checked={!!settings.weekly_summary_enabled}
+                onChange={(v) => setSettings({ ...settings, weekly_summary_enabled: v ? 1 : 0 })}
+                disabled={allDisabled}
+              />
+            </div>
+            {settings.weekly_summary_enabled && !allDisabled && (
+              <div className="flex items-center gap-2 mt-2">
+                <label className="text-sm text-gray-600 dark:text-slate-400">Send at</label>
+                <select
+                  value={settings.weekly_summary_hour}
+                  onChange={(e) => setSettings({ ...settings, weekly_summary_hour: Number(e.target.value) })}
+                  className="px-3 py-2 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {Array.from({ length: 24 }, (_, i) => (
+                    <option key={i} value={i}>
+                      {String(i).padStart(2, '0')}:00
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Save button */}
@@ -234,6 +267,13 @@ export default function NotificationSettings({ currentUserName }: NotificationSe
               className="px-4 py-2.5 text-sm text-gray-700 dark:text-slate-300 border border-gray-200 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
             >
               {testingSending === 'morning' ? 'Sending...' : 'Send Test Summary'}
+            </button>
+            <button
+              onClick={() => sendTestEmail('weekly')}
+              disabled={!!testingSending}
+              className="px-4 py-2.5 text-sm text-gray-700 dark:text-slate-300 border border-gray-200 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
+            >
+              {testingSending === 'weekly' ? 'Sending...' : 'Send Test Weekly'}
             </button>
           </div>
           <p className="text-xs text-gray-400 dark:text-slate-500 mt-2">

@@ -101,6 +101,33 @@ try {
   // Column already exists — ignore
 }
 
+// Goals table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS goals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    exercise_name TEXT NOT NULL,
+    goal_type TEXT NOT NULL,
+    scope TEXT NOT NULL,
+    user_id INTEGER REFERENCES users(id),
+    target_value INTEGER NOT NULL,
+    year INTEGER NOT NULL,
+    month INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Safe migration: add weekly summary columns to user_settings if missing
+try {
+  db.exec(`ALTER TABLE user_settings ADD COLUMN weekly_summary_enabled BOOLEAN DEFAULT 1`);
+} catch {
+  // Column already exists
+}
+try {
+  db.exec(`ALTER TABLE user_settings ADD COLUMN weekly_summary_hour INTEGER DEFAULT 18`);
+} catch {
+  // Column already exists
+}
+
 // Strava integration tables
 db.exec(`
   CREATE TABLE IF NOT EXISTS strava_tokens (
