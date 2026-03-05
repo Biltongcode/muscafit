@@ -35,13 +35,15 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        if (!checkRateLimit(credentials.email)) {
+        const emailNorm = credentials.email.trim().toLowerCase();
+
+        if (!checkRateLimit(emailNorm)) {
           return null;
         }
 
         const user = db
           .prepare('SELECT id, name, email, password_hash, role FROM users WHERE email = ?')
-          .get(credentials.email) as
+          .get(emailNorm) as
           | { id: number; name: string; email: string; password_hash: string; role: string }
           | undefined;
 
