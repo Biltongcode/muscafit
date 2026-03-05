@@ -156,6 +156,11 @@ try {
   // Column already exists
 }
 
+// Safe migration: add weight columns for weighted exercises
+try { db.exec(`ALTER TABLE exercises ADD COLUMN target_weight REAL`); } catch {}
+try { db.exec(`ALTER TABLE exercises ADD COLUMN weight_unit TEXT DEFAULT 'kg'`); } catch {}
+try { db.exec(`ALTER TABLE exercise_logs ADD COLUMN actual_weight REAL`); } catch {}
+
 // Strava integration tables
 db.exec(`
   CREATE TABLE IF NOT EXISTS strava_tokens (

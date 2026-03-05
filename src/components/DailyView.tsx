@@ -17,9 +17,12 @@ interface Exercise {
   targetSets: number | null;
   targetPerSet: number | null;
   exerciseNotes: string | null;
+  targetWeight: number | null;
+  weightUnit: string | null;
   completed: boolean;
   actualValue: number | null;
   actualSets: number | null;
+  actualWeight: number | null;
   logNotes: string | null;
   completedAt: string | null;
 }
@@ -93,6 +96,8 @@ function formatTarget(ex: Exercise): string {
       const desc = `${ex.targetSets}\u00d7${ex.targetPerSet} sec`;
       return ex.exerciseNotes ? `${desc} (${ex.exerciseNotes})` : desc;
     }
+    case 'weighted':
+      return `${ex.targetSets}\u00d7${ex.targetPerSet} @ ${ex.targetWeight}${ex.weightUnit || 'kg'}`;
     default:
       return '';
   }
@@ -252,12 +257,12 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
     }
   };
 
-  const saveDetails = async (logId: number, actualValue: number | null, actualSets: number | null, notes: string | null) => {
+  const saveDetails = async (logId: number, actualValue: number | null, actualSets: number | null, actualWeight: number | null, notes: string | null) => {
     try {
       await fetch(`/api/logs/${logId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ actualValue, actualSets, notes }),
+        body: JSON.stringify({ actualValue, actualSets, actualWeight, notes }),
       });
 
       setUsers((prev) =>
@@ -265,7 +270,7 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
           ...u,
           exercises: u.exercises.map((e) => {
             if (e.logId !== logId) return e;
-            return { ...e, actualValue, actualSets, logNotes: notes };
+            return { ...e, actualValue, actualSets, actualWeight, logNotes: notes };
           }),
         }))
       );
@@ -455,7 +460,7 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
                           isExpanded={expandedLog === ex.logId}
                           onToggle={() => toggleExercise(user.id, ex.logId, ex.exerciseId, ex.completed)}
                           onExpand={() => setExpandedLog(expandedLog === ex.logId ? null : ex.logId)}
-                          onSave={(val, sets, notes) => saveDetails(ex.logId, val, sets, notes)}
+                          onSave={(val, sets, weight, notes) => saveDetails(ex.logId, val, sets, weight, notes)}
                         />
                       ))
                     )}
@@ -645,22 +650,25 @@ interface ExerciseRowProps {
   isExpanded: boolean;
   onToggle: () => void;
   onExpand: () => void;
-  onSave: (actualValue: number | null, actualSets: number | null, notes: string | null) => void;
+  onSave: (actualValue: number | null, actualSets: number | null, actualWeight: number | null, notes: string | null) => void;
 }
 
 function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave }: ExerciseRowProps) {
   const [editValue, setEditValue] = useState<string>(exercise.actualValue?.toString() ?? '');
   const [editSets, setEditSets] = useState<string>(exercise.actualSets?.toString() ?? '');
+  const [editWeight, setEditWeight] = useState<string>(exercise.actualWeight?.toString() ?? exercise.targetWeight?.toString() ?? '');
   const [editNotes, setEditNotes] = useState<string>(exercise.logNotes ?? '');
   const [justChecked, setJustChecked] = useState(false);
 
   useEffect(() => {
     setEditValue(exercise.actualValue?.toString() ?? '');
     setEditSets(exercise.actualSets?.toString() ?? '');
+    setEditWeight(exercise.actualWeight?.toString() ?? exercise.targetWeight?.toString() ?? '');
     setEditNotes(exercise.logNotes ?? '');
-  }, [exercise.actualValue, exercise.actualSets, exercise.logNotes]);
+  }, [exercise.actualValue, exercise.actualSets, exercise.actualWeight, exercise.targetWeight, exercise.logNotes]);
 
-  const hasSets = exercise.targetType === 'reps_sets' || exercise.targetType === 'timed_sets';
+  const hasSets = exercise.targetType === 'reps_sets' || exercise.targetType === 'timed_sets' || exercise.targetType === 'weighted';
+  const isWeighted = exercise.targetType === 'weighted';
 
   const handleToggle = () => {
     if (!exercise.completed) {
@@ -700,7 +708,9 @@ function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave }
             {formatTarget(exercise)}
             {exercise.actualValue != null && (
               <span className="ml-1 text-blue-600 dark:text-blue-400">
-                (did: {exercise.actualValue}{exercise.actualSets != null ? ` in ${exercise.actualSets} sets` : ''})
+                (did: {exercise.actualValue}
+                {exercise.actualSets != null ? ` in ${exercise.actualSets} sets` : ''}
+                {isWeighted && exercise.actualWeight != null ? ` @ ${exercise.actualWeight}${exercise.weightUnit || 'kg'}` : ''})
               </span>
             )}
           </div>
@@ -752,6 +762,22 @@ function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave }
                   />
                 </div>
               )}
+
+              {isWeighted && (
+                <div className="flex-1 sm:flex-none">
+                  <label className="block text-xs text-gray-500 dark:text-slate-400 mb-1">
+                    Weight ({exercise.weightUnit || 'kg'})
+                  </label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    value={editWeight}
+                    onChange={(e) => setEditWeight(e.target.value)}
+                    placeholder={exercise.targetWeight?.toString() ?? ''}
+                    className="w-full sm:w-20 px-3 py-2.5 text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="flex-1">
@@ -770,6 +796,7 @@ function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave }
                 onSave(
                   editValue ? Number(editValue) : null,
                   editSets ? Number(editSets) : null,
+                  isWeighted && editWeight ? Number(editWeight) : null,
                   editNotes || null
                 )
               }

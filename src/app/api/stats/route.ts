@@ -21,10 +21,13 @@ export async function GET(req: NextRequest) {
     SELECT
       e.name as exercise_name,
       e.target_type,
+      e.target_weight,
+      e.weight_unit,
       el.user_id,
       u.name as user_name,
       SUM(CASE WHEN el.completed = 1 THEN COALESCE(el.actual_value, e.target_value, 0) ELSE 0 END) as total_value,
-      COUNT(CASE WHEN el.completed = 1 THEN 1 END) as days_completed
+      COUNT(CASE WHEN el.completed = 1 THEN 1 END) as days_completed,
+      SUM(CASE WHEN el.completed = 1 THEN COALESCE(el.actual_value, e.target_value, 0) * COALESCE(el.actual_weight, e.target_weight, 0) ELSE 0 END) as total_volume
     FROM exercise_logs el
     JOIN exercises e ON e.id = el.exercise_id
     JOIN users u ON u.id = el.user_id
@@ -35,18 +38,23 @@ export async function GET(req: NextRequest) {
   `).all(start, end, ...visibleIds) as Array<{
     exercise_name: string;
     target_type: string;
+    target_weight: number | null;
+    weight_unit: string | null;
     user_id: number;
     user_name: string;
     total_value: number;
     days_completed: number;
+    total_volume: number;
   }>;
 
   // Group by exercise name
   const exerciseMap = new Map<string, {
     exerciseName: string;
     targetType: string;
-    users: Array<{ userId: number; userName: string; totalValue: number; daysCompleted: number }>;
+    weightUnit: string | null;
+    users: Array<{ userId: number; userName: string; totalValue: number; daysCompleted: number; totalVolume: number }>;
     combinedTotal: number;
+    combinedVolume: number;
   }>();
 
   for (const row of exerciseRows) {
@@ -54,8 +62,10 @@ export async function GET(req: NextRequest) {
       exerciseMap.set(row.exercise_name, {
         exerciseName: row.exercise_name,
         targetType: row.target_type,
+        weightUnit: row.weight_unit,
         users: [],
         combinedTotal: 0,
+        combinedVolume: 0,
       });
     }
     const entry = exerciseMap.get(row.exercise_name)!;
@@ -64,8 +74,10 @@ export async function GET(req: NextRequest) {
       userName: row.user_name,
       totalValue: row.total_value,
       daysCompleted: row.days_completed,
+      totalVolume: row.total_volume,
     });
     entry.combinedTotal += row.total_value;
+    entry.combinedVolume += row.total_volume;
   }
 
   // Activity summary

@@ -14,6 +14,8 @@ interface Exercise {
   sort_order: number;
   is_active: number;
   schedule_days: string | null;
+  target_weight: number | null;
+  weight_unit: string | null;
 }
 
 interface ExerciseManagerProps {
@@ -26,6 +28,7 @@ const TARGET_TYPES = [
   { value: 'reps_sets', label: 'Reps in Sets' },
   { value: 'timed', label: 'Timed (seconds)' },
   { value: 'timed_sets', label: 'Timed Sets' },
+  { value: 'weighted', label: 'Weighted (sets \u00d7 reps @ weight)' },
 ];
 
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -52,6 +55,8 @@ function formatTarget(ex: Exercise): string {
       const desc = `${ex.target_sets}\u00d7${ex.target_per_set} sec`;
       return ex.notes ? `${desc} (${ex.notes})` : desc;
     }
+    case 'weighted':
+      return `${ex.target_sets}\u00d7${ex.target_per_set} @ ${ex.target_weight}${ex.weight_unit || 'kg'}`;
     default:
       return '';
   }
@@ -65,10 +70,12 @@ interface EditFormData {
   targetPerSet: string;
   notes: string;
   scheduleDays: string;
+  targetWeight: string;
+  weightUnit: string;
 }
 
 function emptyForm(): EditFormData {
-  return { name: '', targetType: 'reps', targetValue: '', targetSets: '', targetPerSet: '', notes: '', scheduleDays: '' };
+  return { name: '', targetType: 'reps', targetValue: '', targetSets: '', targetPerSet: '', notes: '', scheduleDays: '', targetWeight: '', weightUnit: 'kg' };
 }
 
 function exerciseToForm(ex: Exercise): EditFormData {
@@ -80,6 +87,8 @@ function exerciseToForm(ex: Exercise): EditFormData {
     targetPerSet: ex.target_per_set?.toString() ?? '',
     notes: ex.notes ?? '',
     scheduleDays: ex.schedule_days ?? '',
+    targetWeight: ex.target_weight?.toString() ?? '',
+    weightUnit: ex.weight_unit || 'kg',
   };
 }
 
@@ -169,6 +178,8 @@ export default function ExerciseManager({ currentUserId, currentUserName }: Exer
           targetPerSet: ex.target_per_set,
           notes: ex.notes,
           scheduleDays: ex.schedule_days,
+          targetWeight: ex.target_weight,
+          weightUnit: ex.weight_unit,
         }),
       });
       setCopiedIds((prev) => new Set(prev).add(ex.id));
@@ -200,20 +211,28 @@ export default function ExerciseManager({ currentUserId, currentUserName }: Exer
     setForm(emptyForm());
   };
 
-  const showSets = form.targetType === 'reps_sets' || form.targetType === 'timed_sets';
+  const showSets = form.targetType === 'reps_sets' || form.targetType === 'timed_sets' || form.targetType === 'weighted';
+  const isWeighted = form.targetType === 'weighted';
 
   const saveExercise = async () => {
     if (!form.name.trim()) return;
     setSaving(true);
 
+    // For weighted type, auto-compute targetValue as sets * reps_per_set
+    const computedTargetValue = isWeighted
+      ? (form.targetSets && form.targetPerSet ? Number(form.targetSets) * Number(form.targetPerSet) : null)
+      : (form.targetValue ? Number(form.targetValue) : null);
+
     const payload = {
       name: form.name.trim(),
       targetType: form.targetType,
-      targetValue: form.targetValue ? Number(form.targetValue) : null,
+      targetValue: computedTargetValue,
       targetSets: showSets && form.targetSets ? Number(form.targetSets) : null,
       targetPerSet: showSets && form.targetPerSet ? Number(form.targetPerSet) : null,
       notes: form.notes.trim() || null,
       scheduleDays: form.scheduleDays || null,
+      targetWeight: isWeighted && form.targetWeight ? Number(form.targetWeight) : null,
+      weightUnit: isWeighted ? form.weightUnit : null,
     };
 
     try {
@@ -545,18 +564,20 @@ function ExerciseForm({
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3">
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-              {form.targetType.startsWith('timed') ? 'Seconds' : 'Total Reps'}
-            </label>
-            <input
-              type="number"
-              value={form.targetValue}
-              onChange={(e) => setForm({ ...form, targetValue: e.target.value })}
-              placeholder="e.g. 125"
-              className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:placeholder-slate-500"
-            />
-          </div>
+          {form.targetType !== 'weighted' && (
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                {form.targetType.startsWith('timed') ? 'Seconds' : 'Total Reps'}
+              </label>
+              <input
+                type="number"
+                value={form.targetValue}
+                onChange={(e) => setForm({ ...form, targetValue: e.target.value })}
+                placeholder="e.g. 125"
+                className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:placeholder-slate-500"
+              />
+            </div>
+          )}
 
           {showSets && (
             <>
@@ -566,23 +587,68 @@ function ExerciseForm({
                   type="number"
                   value={form.targetSets}
                   onChange={(e) => setForm({ ...form, targetSets: e.target.value })}
-                  placeholder="e.g. 5"
+                  placeholder="e.g. 3"
                   className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:placeholder-slate-500"
                 />
               </div>
               <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Per Set</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                  {form.targetType === 'weighted' ? 'Reps/Set' : 'Per Set'}
+                </label>
                 <input
                   type="number"
                   value={form.targetPerSet}
                   onChange={(e) => setForm({ ...form, targetPerSet: e.target.value })}
-                  placeholder="e.g. 25"
+                  placeholder={form.targetType === 'weighted' ? 'e.g. 10' : 'e.g. 25'}
                   className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:placeholder-slate-500"
                 />
               </div>
             </>
           )}
         </div>
+
+        {form.targetType === 'weighted' && (
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Weight</label>
+              <input
+                type="number"
+                step="0.5"
+                value={form.targetWeight}
+                onChange={(e) => setForm({ ...form, targetWeight: e.target.value })}
+                placeholder="e.g. 60"
+                className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:placeholder-slate-500"
+              />
+            </div>
+            <div className="w-24">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Unit</label>
+              <div className="flex rounded-lg border border-gray-200 dark:border-slate-600 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, weightUnit: 'kg' })}
+                  className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
+                    form.weightUnit === 'kg'
+                      ? 'gradient-btn'
+                      : 'bg-white dark:bg-slate-700/50 text-gray-500 dark:text-slate-400'
+                  }`}
+                >
+                  kg
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, weightUnit: 'lbs' })}
+                  className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
+                    form.weightUnit === 'lbs'
+                      ? 'gradient-btn'
+                      : 'bg-white dark:bg-slate-700/50 text-gray-500 dark:text-slate-400'
+                  }`}
+                >
+                  lbs
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Notes (optional)</label>

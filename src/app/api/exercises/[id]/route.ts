@@ -37,6 +37,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     sortOrder: 'sort_order',
     isActive: 'is_active',
     scheduleDays: 'schedule_days',
+    targetWeight: 'target_weight',
+    weightUnit: 'weight_unit',
   };
 
   for (const [jsKey, dbCol] of Object.entries(fieldMap)) {
@@ -60,7 +62,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     .prepare(
       `SELECT id, name, target_type as targetType, target_value as targetValue,
               target_sets as targetSets, target_per_set as targetPerSet,
-              notes, sort_order as sortOrder, is_active as isActive, schedule_days as scheduleDays
+              notes, sort_order as sortOrder, is_active as isActive, schedule_days as scheduleDays,
+              target_weight as targetWeight, weight_unit as weightUnit
        FROM exercises WHERE id = ?`
     )
     .get(exerciseId);

@@ -284,13 +284,16 @@ async function sendWeeklySummaries() {
           COUNT(CASE WHEN el.completed = 1 THEN 1 END) as days_done,
           COUNT(*) as days_total,
           SUM(CASE WHEN el.completed = 1 THEN COALESCE(el.actual_value, e.target_value, 0) ELSE 0 END) as total_value,
-          e.target_type
+          e.target_type,
+          e.target_weight,
+          e.weight_unit,
+          SUM(CASE WHEN el.completed = 1 THEN COALESCE(el.actual_value, e.target_value, 0) * COALESCE(el.actual_weight, e.target_weight, 0) ELSE 0 END) as total_volume
         FROM exercise_logs el
         JOIN exercises e ON e.id = el.exercise_id
         WHERE el.user_id = ? AND el.log_date >= ? AND el.log_date <= ?
         GROUP BY e.name
         ORDER BY e.name
-      `).all(u.id, start, end) as Array<{ name: string; days_done: number; days_total: number; total_value: number; target_type: string }>;
+      `).all(u.id, start, end) as Array<{ name: string; days_done: number; days_total: number; total_value: number; target_type: string; target_weight: number | null; weight_unit: string | null; total_volume: number }>;
 
       const activities = db.prepare(`
         SELECT activity_type, COUNT(*) as count, SUM(duration_minutes) as total_mins
@@ -306,9 +309,14 @@ async function sendWeeklySummaries() {
         for (const ex of exercises) {
           const pct = ex.days_total > 0 ? Math.round((ex.days_done / ex.days_total) * 100) : 0;
           const color = pct === 100 ? '#16a34a' : pct >= 50 ? '#d97706' : '#ef4444';
-          const valueStr = ex.target_type === 'time'
-            ? `${Math.floor(ex.total_value / 60)}h ${ex.total_value % 60}m`
-            : `${ex.total_value.toLocaleString()} reps`;
+          let valueStr: string;
+          if (ex.target_type.startsWith('timed')) {
+            valueStr = `${Math.floor(ex.total_value / 60)}h ${ex.total_value % 60}m`;
+          } else if (ex.target_type === 'weighted' && ex.total_volume > 0) {
+            valueStr = `${ex.total_value.toLocaleString()} reps \u00b7 ${ex.total_volume.toLocaleString()} ${ex.weight_unit || 'kg'}`;
+          } else {
+            valueStr = `${ex.total_value.toLocaleString()} reps`;
+          }
           section += `
             <tr>
               <td style="padding: 4px 0; color: #374151;">${escapeHtml(ex.name)}</td>
@@ -455,12 +463,15 @@ export async function sendTestEmail(userId: number, type: 'evening' | 'morning' 
           COUNT(CASE WHEN el.completed = 1 THEN 1 END) as days_done,
           COUNT(*) as days_total,
           SUM(CASE WHEN el.completed = 1 THEN COALESCE(el.actual_value, e.target_value, 0) ELSE 0 END) as total_value,
-          e.target_type
+          e.target_type,
+          e.target_weight,
+          e.weight_unit,
+          SUM(CASE WHEN el.completed = 1 THEN COALESCE(el.actual_value, e.target_value, 0) * COALESCE(el.actual_weight, e.target_weight, 0) ELSE 0 END) as total_volume
         FROM exercise_logs el
         JOIN exercises e ON e.id = el.exercise_id
         WHERE el.user_id = ? AND el.log_date >= ? AND el.log_date <= ?
         GROUP BY e.name ORDER BY e.name
-      `).all(u.id, start, today) as Array<{ name: string; days_done: number; days_total: number; total_value: number; target_type: string }>;
+      `).all(u.id, start, today) as Array<{ name: string; days_done: number; days_total: number; total_value: number; target_type: string; target_weight: number | null; weight_unit: string | null; total_volume: number }>;
 
       const activities = db.prepare(`
         SELECT activity_type, COUNT(*) as count, SUM(duration_minutes) as total_mins
@@ -475,9 +486,14 @@ export async function sendTestEmail(userId: number, type: 'evening' | 'morning' 
         for (const ex of exercises) {
           const pct = ex.days_total > 0 ? Math.round((ex.days_done / ex.days_total) * 100) : 0;
           const color = pct === 100 ? '#16a34a' : pct >= 50 ? '#d97706' : '#ef4444';
-          const valueStr = ex.target_type === 'time'
-            ? `${Math.floor(ex.total_value / 60)}h ${ex.total_value % 60}m`
-            : `${ex.total_value.toLocaleString()} reps`;
+          let valueStr: string;
+          if (ex.target_type.startsWith('timed')) {
+            valueStr = `${Math.floor(ex.total_value / 60)}h ${ex.total_value % 60}m`;
+          } else if (ex.target_type === 'weighted' && ex.total_volume > 0) {
+            valueStr = `${ex.total_value.toLocaleString()} reps \u00b7 ${ex.total_volume.toLocaleString()} ${ex.weight_unit || 'kg'}`;
+          } else {
+            valueStr = `${ex.total_value.toLocaleString()} reps`;
+          }
           section += `<tr>
             <td style="padding: 4px 0; color: #374151;">${escapeHtml(ex.name)}</td>
             <td style="padding: 4px 8px; color: ${color}; font-weight: 600; text-align: right;">${ex.days_done}/${ex.days_total} days</td>

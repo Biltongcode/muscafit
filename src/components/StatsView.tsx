@@ -12,8 +12,10 @@ interface StatsViewProps {
 interface ExerciseStat {
   exerciseName: string;
   targetType: string;
-  users: Array<{ userId: number; userName: string; totalValue: number; daysCompleted: number }>;
+  weightUnit: string | null;
+  users: Array<{ userId: number; userName: string; totalValue: number; daysCompleted: number; totalVolume: number }>;
   combinedTotal: number;
+  combinedVolume: number;
 }
 
 interface ActivityStat {
@@ -212,6 +214,7 @@ export default function StatsView({ currentUserName }: StatsViewProps) {
             {/* Exercise totals */}
             {exercises.length > 0 ? (
               exercises.map(ex => {
+                const isWeighted = ex.targetType === 'weighted';
                 const maxUserValue = Math.max(...ex.users.map(u => u.totalValue), 1);
                 return (
                   <div key={ex.exerciseName} className="glass rounded-xl shadow-sm p-4">
@@ -222,6 +225,11 @@ export default function StatsView({ currentUserName }: StatsViewProps) {
                           {formatValue(ex.combinedTotal, ex.targetType)}
                         </span>
                         <span className="text-sm text-gray-400 dark:text-slate-500">{formatUnit(ex.targetType)}</span>
+                        {isWeighted && ex.combinedVolume > 0 && (
+                          <div className="text-xs text-violet-600 dark:text-violet-400 mt-0.5">
+                            {ex.combinedVolume.toLocaleString()} {ex.weightUnit || 'kg'} volume
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="space-y-2">
@@ -234,6 +242,11 @@ export default function StatsView({ currentUserName }: StatsViewProps) {
                               <span className={`text-sm font-medium ${color.text}`}>{user.userName}</span>
                               <span className="text-sm text-gray-600 dark:text-slate-300 font-medium">
                                 {formatValue(user.totalValue, ex.targetType)}
+                                {isWeighted && user.totalVolume > 0 && (
+                                  <span className="text-violet-600 dark:text-violet-400 text-xs ml-1">
+                                    ({user.totalVolume.toLocaleString()} {ex.weightUnit || 'kg'})
+                                  </span>
+                                )}
                                 <span className="text-gray-400 dark:text-slate-500 text-xs ml-1">
                                   ({user.daysCompleted} day{user.daysCompleted !== 1 ? 's' : ''})
                                 </span>
