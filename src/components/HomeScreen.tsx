@@ -41,7 +41,7 @@ export default function HomeScreen({ currentUserName }: HomeScreenProps) {
             </svg>
           </div>
           <p className="text-gray-500 dark:text-slate-400 text-sm sm:text-base">
-            Strength training accountability with your connections.
+            Stay on track together. Log exercises, track progress, keep each other accountable.
           </p>
         </div>
 
@@ -124,55 +124,37 @@ export default function HomeScreen({ currentUserName }: HomeScreenProps) {
           </button>
         </div>
 
-        {/* Quick Guide */}
+        {/* How it works */}
         <div className="glass rounded-2xl p-6">
           <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            Quick Guide
+            How it works
           </h3>
           <ul className="space-y-3">
             <li className="flex items-start gap-3">
               <span className="mt-0.5 w-6 h-6 rounded-full bg-blue-500/10 dark:bg-blue-400/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">1</span>
-              <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
-                <strong>Check off exercises</strong> as you complete them each day. Tap the checkbox to mark done.
+              <p className="text-sm text-gray-600 dark:text-slate-300">
+                <strong>Set up your exercises</strong> &mdash; reps, sets, weighted, or timed. Schedule them to specific days if you like.
               </p>
             </li>
             <li className="flex items-start gap-3">
               <span className="mt-0.5 w-6 h-6 rounded-full bg-blue-500/10 dark:bg-blue-400/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">2</span>
-              <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
-                <strong>Log activities</strong> like runs, walks, or gym sessions using the activity bar at the top of each user card.
+              <p className="text-sm text-gray-600 dark:text-slate-300">
+                <strong>Check them off daily</strong> &mdash; tick the box when done. Log runs, walks, or gym sessions too.
               </p>
             </li>
             <li className="flex items-start gap-3">
               <span className="mt-0.5 w-6 h-6 rounded-full bg-blue-500/10 dark:bg-blue-400/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">3</span>
-              <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
-                <strong>Leave comments</strong> to motivate your connections. Open the comment section at the bottom of each user card.
+              <p className="text-sm text-gray-600 dark:text-slate-300">
+                <strong>Invite a friend</strong> &mdash; see each other&apos;s progress, leave comments, and stay motivated together.
               </p>
             </li>
             <li className="flex items-start gap-3">
               <span className="mt-0.5 w-6 h-6 rounded-full bg-blue-500/10 dark:bg-blue-400/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">4</span>
-              <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
-                <strong>Check the weekly view</strong> to see your full week and track consistency over time. Rest days show automatically.
-              </p>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="mt-0.5 w-6 h-6 rounded-full bg-blue-500/10 dark:bg-blue-400/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">5</span>
-              <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
-                <strong>Schedule exercises</strong> for specific days of the week. Tap your name (top-right), go to My Exercises, edit an exercise, and use the day picker to assign it to certain days. Unscheduled days become rest days.
-              </p>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="mt-0.5 w-6 h-6 rounded-full bg-blue-500/10 dark:bg-blue-400/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">6</span>
-              <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
-                <strong>Manage exercises & reminders</strong> from the menu under your name in the top-right corner. You can add, edit, reorder, and configure email notifications.
-              </p>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="mt-0.5 w-6 h-6 rounded-full bg-blue-500/10 dark:bg-blue-400/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">7</span>
-              <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
-                <strong>Connect Strava</strong> to see your recent activities in one feed. Tap your name (top-right), go to Strava, and link your account.
+              <p className="text-sm text-gray-600 dark:text-slate-300">
+                <strong>Track your progress</strong> &mdash; set goals, view stats, and review your week at a glance.
               </p>
             </li>
           </ul>
