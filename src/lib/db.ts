@@ -161,6 +161,11 @@ try { db.exec(`ALTER TABLE exercises ADD COLUMN target_weight REAL`); } catch {}
 try { db.exec(`ALTER TABLE exercises ADD COLUMN weight_unit TEXT DEFAULT 'kg'`); } catch {}
 try { db.exec(`ALTER TABLE exercise_logs ADD COLUMN actual_weight REAL`); } catch {}
 
+// Safe migration: add role column to users
+try { db.exec(`ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'`); } catch {}
+// Auto-promote user id 1 to admin
+try { db.exec(`UPDATE users SET role = 'admin' WHERE id = 1 AND role = 'user'`); } catch {}
+
 // Strava integration tables
 db.exec(`
   CREATE TABLE IF NOT EXISTS strava_tokens (

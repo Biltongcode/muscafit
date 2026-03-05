@@ -2,18 +2,21 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 import { useTheme } from '@/app/providers';
 
 interface NavBarProps {
   currentUserName: string;
   active?: 'daily' | 'weekly' | 'stats' | 'strava';
+  isAdmin?: boolean;
 }
 
-export default function NavBar({ currentUserName, active }: NavBarProps) {
+export default function NavBar({ currentUserName, active, isAdmin: isAdminProp }: NavBarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
+  const { data: sessionData } = useSession();
+  const isAdmin = isAdminProp ?? sessionData?.user?.role === 'admin';
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -82,6 +85,7 @@ export default function NavBar({ currentUserName, active }: NavBarProps) {
     { label: 'Goals', path: '/settings/goals' },
     { label: 'Strava', path: '/settings/strava' },
     { label: 'Connections', path: '/settings/connections' },
+    ...(isAdmin ? [{ label: 'Admin', path: '/admin' }] : []),
   ];
 
   const navigate = (path: string) => {

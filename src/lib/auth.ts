@@ -40,9 +40,9 @@ export const authOptions: NextAuthOptions = {
         }
 
         const user = db
-          .prepare('SELECT id, name, email, password_hash FROM users WHERE email = ?')
+          .prepare('SELECT id, name, email, password_hash, role FROM users WHERE email = ?')
           .get(credentials.email) as
-          | { id: number; name: string; email: string; password_hash: string }
+          | { id: number; name: string; email: string; password_hash: string; role: string }
           | undefined;
 
         // Always run bcrypt compare to prevent timing attacks
@@ -57,6 +57,7 @@ export const authOptions: NextAuthOptions = {
           id: String(user.id),
           name: user.name,
           email: user.email,
+          role: user.role || 'user',
         };
       },
     }),
@@ -69,12 +70,14 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.role = (user as { role?: string }).role || 'user';
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         (session.user as { id?: string }).id = token.id as string;
+        (session.user as { role?: string }).role = token.role as string;
       }
       return session;
     },
