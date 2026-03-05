@@ -44,8 +44,21 @@ export default function NavBar({ currentUserName, active }: NavBarProps) {
     <header className="glass-strong shadow-sm sticky top-0 z-40">
       <div className="max-w-5xl mx-auto px-4 py-2 flex items-center justify-between">
         <div className="flex items-center gap-4 sm:gap-6">
-          <button onClick={() => router.push('/')} className="text-lg font-bold gradient-text hover:opacity-80 transition-opacity">
-            Muscafit
+          <button onClick={() => router.push('/')} className="hover:opacity-80 transition-opacity flex items-center">
+            <svg viewBox="0 0 260 44" className="h-7 w-auto" aria-label="Muscafit">
+              <defs>
+                <linearGradient id="navGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style={{stopColor:'#6C8EFF'}}/>
+                  <stop offset="100%" style={{stopColor:'#A855F7'}}/>
+                </linearGradient>
+              </defs>
+              <rect x="0" y="12" width="4" height="20" rx="2" fill="url(#navGrad)"/>
+              <rect x="4" y="17" width="6" height="10" rx="1.5" fill="url(#navGrad)"/>
+              <rect x="10" y="20" width="10" height="4" rx="1.5" fill="url(#navGrad)"/>
+              <rect x="20" y="17" width="6" height="10" rx="1.5" fill="url(#navGrad)"/>
+              <rect x="26" y="12" width="4" height="20" rx="2" fill="url(#navGrad)"/>
+              <text x="38" y="30" fontFamily="'DM Serif Display', Georgia, serif" fontSize="24" fontWeight="700" letterSpacing="-0.3" className="fill-gray-900 dark:fill-white">Muscafit</text>
+            </svg>
           </button>
           <nav className="flex gap-1">
             <button

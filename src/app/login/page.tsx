@@ -40,7 +40,29 @@ function LoginForm() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 px-4">
       <div className="w-full max-w-sm animate-fade-in">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold gradient-text">Muscafit</h1>
+          <div className="flex justify-center mb-3">
+            <svg viewBox="0 0 320 80" className="h-16 sm:h-20 w-auto" aria-label="Muscafit">
+              <defs>
+                <linearGradient id="loginGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style={{stopColor:'#6C8EFF'}}/>
+                  <stop offset="100%" style={{stopColor:'#A855F7'}}/>
+                </linearGradient>
+                <filter id="loginGlow">
+                  <feGaussianBlur stdDeviation="2" result="cb"/>
+                  <feMerge><feMergeNode in="cb"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+              <rect x="4" y="4" width="72" height="72" rx="18" fill="url(#loginGrad)" opacity="0.15"/>
+              <rect x="4" y="4" width="72" height="72" rx="18" fill="none" stroke="url(#loginGrad)" strokeWidth="1.5" opacity="0.6"/>
+              <rect x="14" y="30" width="7" height="20" rx="3" fill="url(#loginGrad)" filter="url(#loginGlow)"/>
+              <rect x="21" y="36" width="10" height="8" rx="2" fill="url(#loginGrad)"/>
+              <rect x="31" y="38" width="18" height="4" rx="2" fill="url(#loginGrad)"/>
+              <rect x="49" y="36" width="10" height="8" rx="2" fill="url(#loginGrad)"/>
+              <rect x="59" y="30" width="7" height="20" rx="3" fill="url(#loginGrad)" filter="url(#loginGlow)"/>
+              <text x="92" y="51" fontFamily="'DM Serif Display', Georgia, serif" fontSize="34" fontWeight="700" letterSpacing="-0.5" fill="white">Muscafit</text>
+              <line x1="92" y1="58" x2="308" y2="58" stroke="url(#loginGrad)" strokeWidth="1.5" opacity="0.35"/>
+            </svg>
+          </div>
           <p className="mt-2 text-slate-400">Log in to track your training</p>
         </div>
 
