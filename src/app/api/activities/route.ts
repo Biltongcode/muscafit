@@ -46,11 +46,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'date and activityType required' }, { status: 400 });
   }
 
-  const validTypes = ['squash', 'run', 'walk', 'gym', 'cycle'];
-  if (!validTypes.includes(activityType)) {
-    return NextResponse.json({ error: 'Invalid activity type' }, { status: 400 });
-  }
-
   const userId = Number(session.user.id);
 
   const result = db

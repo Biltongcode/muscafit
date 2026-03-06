@@ -166,40 +166,6 @@ try { db.exec(`ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'`); } catch 
 // Auto-promote user id 1 to admin
 try { db.exec(`UPDATE users SET role = 'admin' WHERE id = 1 AND role = 'user'`); } catch {}
 
-// Strava integration tables
-db.exec(`
-  CREATE TABLE IF NOT EXISTS strava_tokens (
-    user_id INTEGER PRIMARY KEY REFERENCES users(id),
-    strava_athlete_id INTEGER NOT NULL,
-    access_token TEXT NOT NULL,
-    refresh_token TEXT NOT NULL,
-    expires_at INTEGER NOT NULL,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-
-  CREATE TABLE IF NOT EXISTS strava_activities (
-    strava_id INTEGER PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id),
-    name TEXT NOT NULL,
-    sport_type TEXT NOT NULL,
-    distance_meters REAL DEFAULT 0,
-    moving_time_seconds INTEGER DEFAULT 0,
-    total_elevation_gain REAL DEFAULT 0,
-    start_date_local TEXT NOT NULL,
-    activity_date DATE NOT NULL,
-    cached_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-
-  CREATE INDEX IF NOT EXISTS idx_strava_activities_user_date
-    ON strava_activities(user_id, activity_date);
-
-  CREATE TABLE IF NOT EXISTS strava_sync_log (
-    user_id INTEGER PRIMARY KEY REFERENCES users(id),
-    synced_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    activities_fetched INTEGER DEFAULT 0
-  );
-`);
-
 // Safe migration: add canonical_name for shared exercise catalogue
 try { db.exec(`ALTER TABLE exercises ADD COLUMN canonical_name TEXT`); } catch {}
 

@@ -25,9 +25,9 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
   db.prepare(
     `UPDATE activity_sessions SET
-       duration_minutes = COALESCE(?, duration_minutes),
-       distance_km = COALESCE(?, distance_km),
-       notes = COALESCE(?, notes)
+       duration_minutes = ?,
+       distance_km = ?,
+       notes = ?
      WHERE id = ? AND user_id = ?`
   ).run(durationMinutes ?? null, distanceKm ?? null, notes ?? null, activityId, userId);
 

@@ -7,7 +7,7 @@ import { useTheme } from '@/app/providers';
 
 interface NavBarProps {
   currentUserName: string;
-  active?: 'daily' | 'weekly' | 'stats' | 'strava';
+  active?: 'daily' | 'weekly' | 'stats';
   isAdmin?: boolean;
 }
 
@@ -26,7 +26,6 @@ export default function NavBar({ currentUserName, active, isAdmin: isAdminProp }
   const currentTab = active ?? (
     pathname.startsWith('/weekly') ? 'weekly' :
     pathname.startsWith('/stats') ? 'stats' :
-    pathname.startsWith('/strava') ? 'strava' :
     pathname.startsWith('/daily') ? 'daily' :
     pathname.startsWith('/settings') ? 'settings' :
     pathname === '/' ? 'home' : 'daily'
@@ -71,11 +70,6 @@ export default function NavBar({ currentUserName, active, isAdmin: isAdminProp }
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
       </svg>
     )},
-    { key: 'strava', label: 'Strava', path: '/strava', activeColor: 'bg-orange-50 text-orange-700 dark:bg-orange-500/15 dark:text-orange-400', icon: (
-      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" />
-      </svg>
-    )},
   ];
 
   const settingsItems = [
@@ -83,7 +77,6 @@ export default function NavBar({ currentUserName, active, isAdmin: isAdminProp }
     { label: 'Profile', path: '/settings/profile' },
     { label: 'Notifications', path: '/settings/notifications' },
     { label: 'Goals', path: '/settings/goals' },
-    { label: 'Strava', path: '/settings/strava' },
     { label: 'Connections', path: '/settings/connections' },
     ...(isAdmin ? [{ label: 'Admin', path: '/admin' }] : []),
   ];
@@ -209,7 +202,7 @@ export default function NavBar({ currentUserName, active, isAdmin: isAdminProp }
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-gray-200/60 dark:border-slate-700/50 animate-scale-in">
           {/* Nav tabs */}
-          <div className="grid grid-cols-4 gap-1 px-3 py-2">
+          <div className="grid grid-cols-3 gap-1 px-3 py-2">
             {navItems.map(item => (
               <button
                 key={item.key}

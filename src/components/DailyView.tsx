@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import NavBar from './NavBar';
 import Avatar from './Avatar';
-import StravaSection from './StravaSection';
+import { ACTIVITY_CATALOGUE, getActivityType, getActivityColorClasses } from '@/lib/activity-catalogue';
 
 // --- Types ---
 
@@ -45,18 +45,6 @@ interface Activity {
   sessionDate: string;
 }
 
-interface StravaActivity {
-  stravaId: number;
-  userId: number;
-  name: string;
-  sportType: string;
-  distanceMeters: number;
-  movingTimeSeconds: number;
-  totalElevationGain: number;
-  startDateLocal: string;
-  activityDate: string;
-}
-
 interface Comment {
   id: number;
   authorId: number;
@@ -75,14 +63,6 @@ interface DailyViewProps {
 }
 
 // --- Helpers ---
-
-const ACTIVITY_TYPES = [
-  { key: 'squash', label: 'Squash' },
-  { key: 'run', label: 'Run' },
-  { key: 'walk', label: 'Walk' },
-  { key: 'gym', label: 'Gym' },
-  { key: 'cycle', label: 'Cycle' },
-] as const;
 
 function formatTarget(ex: Exercise): string {
   switch (ex.targetType) {
@@ -121,51 +101,6 @@ function getTodayStr(): string {
   return `${y}-${m}-${d}`;
 }
 
-// --- Activity Icons (inline SVG) ---
-
-function ActivityIcon({ type, className }: { type: string; className?: string }) {
-  const cls = className || 'w-5 h-5';
-  switch (type) {
-    case 'squash':
-      return (
-        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-          <circle cx="16" cy="6" r="3" />
-          <path strokeLinecap="round" d="M5 19c1-3 3-5 6-6M11 13l5-5M3 21l3-3" />
-        </svg>
-      );
-    case 'run':
-      return (
-        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-          <circle cx="13" cy="4" r="2" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M7 21l3-7 3 2 4-6M16 11l2-3M10 14l-3 1" />
-        </svg>
-      );
-    case 'walk':
-      return (
-        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-          <circle cx="12" cy="4" r="2" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 21l2-7M15 21l-2-7M13 14l1-4-3-1-1 4" />
-        </svg>
-      );
-    case 'gym':
-      return (
-        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round">
-          <path d="M4 12h16M6 8v8M18 8v8M3 10v4M21 10v4M9 10v4M15 10v4" />
-        </svg>
-      );
-    case 'cycle':
-      return (
-        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-          <circle cx="6" cy="16" r="4" />
-          <circle cx="18" cy="16" r="4" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M6 16l5-8h4l3 8M11 8l2 8" />
-        </svg>
-      );
-    default:
-      return null;
-  }
-}
-
 // --- Main Component ---
 
 export default function DailyView({ currentUserId, currentUserName, currentUserAvatar }: DailyViewProps) {
@@ -174,8 +109,6 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
   const [date, setDate] = useState(initialDate);
   const [users, setUsers] = useState<UserData[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
-  const [stravaActivities, setStravaActivities] = useState<StravaActivity[]>([]);
-  const [stravaConnectedUserIds, setStravaConnectedUserIds] = useState<number[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedLog, setExpandedLog] = useState<number | null>(null);
@@ -184,27 +117,24 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
     type: string;
     existing: Activity | null;
   } | null>(null);
+  const [showActivityPicker, setShowActivityPicker] = useState(false);
 
   const isToday = date === getTodayStr();
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [logsRes, activitiesRes, commentsRes, stravaRes] = await Promise.all([
+      const [logsRes, activitiesRes, commentsRes] = await Promise.all([
         fetch(`/api/logs?date=${date}`),
         fetch(`/api/activities?date=${date}`),
         fetch(`/api/comments?date=${date}`),
-        fetch(`/api/strava/activities?date=${date}`),
       ]);
       const logsData = await logsRes.json();
       const activitiesData = await activitiesRes.json();
       const commentsData = await commentsRes.json();
-      const stravaData = await stravaRes.json();
       setUsers(logsData.users);
       setActivities(activitiesData.activities);
       setComments(commentsData.comments);
-      setStravaActivities(stravaData.activities || []);
-      setStravaConnectedUserIds(stravaData.connectedUserIds || []);
     } catch (err) {
       console.error('Failed to fetch data:', err);
     }
@@ -224,6 +154,7 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
     setDate(`${y}-${m}-${day}`);
     setExpandedLog(null);
     setActivityModal(null);
+    setShowActivityPicker(false);
   };
 
   const toggleExercise = async (userId: number, logId: number, exerciseId: number, currentCompleted: boolean) => {
@@ -282,14 +213,17 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
 
   // --- Activity handlers ---
 
-  const handleActivityClick = (userId: number, type: string) => {
-    const existing = activities.find((a) => a.userId === userId && a.activityType === type);
-    if (userId === currentUserId) {
-      setActivityModal({ userId, type, existing: existing ?? null });
-    }
+  const handleActivityCardClick = (activity: Activity) => {
+    if (activity.userId !== currentUserId) return;
+    setActivityModal({ userId: activity.userId, type: activity.activityType, existing: activity });
   };
 
-  const saveActivity = async (durationMinutes: number | null, notes: string | null) => {
+  const handlePickerSelect = (type: string) => {
+    setShowActivityPicker(false);
+    setActivityModal({ userId: currentUserId, type, existing: null });
+  };
+
+  const saveActivity = async (durationMinutes: number | null, distanceKm: number | null, notes: string | null) => {
     if (!activityModal) return;
     const { type, existing } = activityModal;
 
@@ -298,13 +232,13 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
         await fetch(`/api/activities/${existing.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ durationMinutes, notes }),
+          body: JSON.stringify({ durationMinutes, distanceKm, notes }),
         });
       } else {
         await fetch('/api/activities', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ date, activityType: type, durationMinutes, notes }),
+          body: JSON.stringify({ date, activityType: type, durationMinutes, distanceKm, notes }),
         });
       }
       await fetchData();
@@ -328,7 +262,6 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
   // --- Comment handler ---
 
   const postComment = async (targetUserId: number, body: string) => {
-    // Optimistic update
     const tempComment: Comment = {
       id: Date.now(),
       authorId: currentUserId,
@@ -348,12 +281,10 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
         body: JSON.stringify({ targetUserId, date, comment: body }),
       });
       const data = await res.json();
-      // Replace temp comment with real one
       setComments((prev) =>
         prev.map((c) => (c.id === tempComment.id ? data.comment : c))
       );
     } catch {
-      // Remove temp comment on error
       setComments((prev) => prev.filter((c) => c.id !== tempComment.id));
     }
   };
@@ -398,7 +329,7 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
           </button>
           {!isToday && (
             <button
-              onClick={() => { setDate(getTodayStr()); setExpandedLog(null); setActivityModal(null); }}
+              onClick={() => { setDate(getTodayStr()); setExpandedLog(null); setActivityModal(null); setShowActivityPicker(false); }}
               className="ml-2 px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 rounded-full hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors"
             >
               Today
@@ -415,8 +346,6 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
               const total = user.exercises.length;
               const isOwn = user.id === currentUserId;
               const userActivities = activities.filter((a) => a.userId === user.id);
-              const userStravaActivities = stravaActivities.filter((a) => a.userId === user.id);
-              const userHasStrava = stravaConnectedUserIds.includes(user.id);
               const userComments = comments.filter((c) => c.targetUserId === user.id);
 
               return (
@@ -466,20 +395,12 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
                     )}
                   </div>
 
-                  {/* Activity Bar — always show for own column, only show for others if they have activities */}
-                  {(isOwn || userActivities.length > 0) && (
-                    <ActivityBar
-                      userId={user.id}
-                      isOwn={isOwn}
-                      userActivities={userActivities}
-                      onActivityClick={(type) => handleActivityClick(user.id, type)}
-                    />
-                  )}
-
-                  {/* Strava Activities */}
-                  <StravaSection
-                    activities={userStravaActivities}
-                    isConnected={userHasStrava}
+                  {/* Activity Cards */}
+                  <ActivityCards
+                    userActivities={userActivities}
+                    isOwn={isOwn}
+                    onCardClick={handleActivityCardClick}
+                    onAddClick={() => setShowActivityPicker(true)}
                   />
 
                   {/* Comments */}
@@ -494,7 +415,15 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
         )}
       </div>
 
-      {/* Activity Modal */}
+      {/* Activity Picker Modal */}
+      {showActivityPicker && (
+        <ActivityPicker
+          onSelect={handlePickerSelect}
+          onClose={() => setShowActivityPicker(false)}
+        />
+      )}
+
+      {/* Activity Detail Modal */}
       {activityModal && (
         <ActivityModal
           type={activityModal.type}
@@ -508,51 +437,179 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
   );
 }
 
-// --- Activity Bar ---
+// --- Activity Cards ---
 
-function ActivityBar({
-  userId,
-  isOwn,
+function ActivityCards({
   userActivities,
-  onActivityClick,
+  isOwn,
+  onCardClick,
+  onAddClick,
 }: {
-  userId: number;
-  isOwn: boolean;
   userActivities: Activity[];
-  onActivityClick: (type: string) => void;
+  isOwn: boolean;
+  onCardClick: (activity: Activity) => void;
+  onAddClick: () => void;
 }) {
-  return (
-    <div className="px-4 py-3 border-t border-gray-100 dark:border-slate-700/50 bg-gray-50/50 dark:bg-slate-900/30">
-      <div className="flex items-center justify-around">
-        {ACTIVITY_TYPES.map(({ key, label }) => {
-          const activity = userActivities.find((a) => a.activityType === key);
-          const isLogged = !!activity;
+  if (!isOwn && userActivities.length === 0) return null;
 
-          return (
-            <button
-              key={key}
-              onClick={() => onActivityClick(key)}
-              disabled={!isOwn}
-              className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
-                isOwn ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-700/50' : 'cursor-default'
-              } ${isLogged ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-slate-500'}`}
-              title={label}
-            >
-              <div
-                className={`p-1.5 rounded-full transition-colors ${
-                  isLogged ? 'bg-blue-100 dark:bg-blue-500/15' : ''
+  return (
+    <div className="px-4 py-3 border-t border-gray-100 dark:border-slate-700/50">
+      {userActivities.length > 0 && (
+        <div className="space-y-2 mb-2">
+          {userActivities.map((activity) => {
+            const actType = getActivityType(activity.activityType);
+            const colors = getActivityColorClasses(actType.color);
+
+            return (
+              <button
+                key={activity.id}
+                onClick={() => onCardClick(activity)}
+                disabled={!isOwn}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all ${colors.bg} ${colors.border} ${
+                  isOwn ? 'cursor-pointer hover:shadow-sm active:scale-[0.98]' : 'cursor-default'
                 }`}
               >
-                <ActivityIcon type={key} className="w-5 h-5" />
+                <span className="text-lg flex-shrink-0" role="img" aria-label={actType.label}>
+                  {actType.emoji}
+                </span>
+                <span className={`text-sm font-medium ${colors.text} flex-shrink-0`}>
+                  {actType.label}
+                </span>
+                <div className="flex items-center gap-2 ml-auto text-xs">
+                  {activity.durationMinutes != null && (
+                    <span className={`font-medium ${colors.text}`}>
+                      {activity.durationMinutes}m
+                    </span>
+                  )}
+                  {activity.distanceKm != null && activity.distanceKm > 0 && (
+                    <span className={`${colors.text} opacity-75`}>
+                      {activity.distanceKm} km
+                    </span>
+                  )}
+                  {activity.notes && (
+                    <span className="text-gray-400 dark:text-slate-500 truncate max-w-[100px]" title={activity.notes}>
+                      {activity.notes}
+                    </span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {isOwn && (
+        <button
+          onClick={onAddClick}
+          className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-dashed border-gray-300 dark:border-slate-600 text-gray-500 dark:text-slate-400 text-sm font-medium hover:bg-gray-50 dark:hover:bg-slate-800/50 hover:border-gray-400 dark:hover:border-slate-500 transition-all active:scale-[0.98]"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Log activity
+        </button>
+      )}
+    </div>
+  );
+}
+
+// --- Activity Picker ---
+
+function ActivityPicker({
+  onSelect,
+  onClose,
+}: {
+  onSelect: (type: string) => void;
+  onClose: () => void;
+}) {
+  const [customMode, setCustomMode] = useState(false);
+  const [customName, setCustomName] = useState('');
+
+  const handleCustomSubmit = () => {
+    const key = customName.trim().toLowerCase().replace(/\s+/g, '_');
+    if (key) {
+      onSelect(key);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 dark:bg-black/60" onClick={onClose} />
+      <div className="relative glass rounded-xl shadow-xl dark:shadow-glow w-full max-w-md animate-scale-in max-h-[80vh] flex flex-col">
+        {/* Header */}
+        <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-700/50 flex items-center justify-between flex-shrink-0">
+          <h3 className="font-semibold text-gray-900 dark:text-slate-100">
+            {customMode ? 'Custom Activity' : 'Choose Activity'}
+          </h3>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-gray-400 dark:text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-700/50 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {customMode ? (
+          <div className="p-4 space-y-3">
+            <input
+              type="text"
+              value={customName}
+              onChange={(e) => setCustomName(e.target.value)}
+              placeholder="e.g. Surfing"
+              autoFocus
+              className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:placeholder-slate-500"
+              onKeyDown={(e) => e.key === 'Enter' && handleCustomSubmit()}
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={handleCustomSubmit}
+                disabled={!customName.trim()}
+                className="flex-1 py-2.5 gradient-btn rounded-lg text-sm disabled:opacity-40"
+              >
+                Continue
+              </button>
+              <button
+                onClick={() => { setCustomMode(false); setCustomName(''); }}
+                className="px-4 py-2.5 text-gray-600 dark:text-slate-400 text-sm rounded-lg border border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors"
+              >
+                Back
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Activity grid */}
+            <div className="overflow-y-auto flex-1 p-3">
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                {ACTIVITY_CATALOGUE.map((at) => {
+                  const colors = getActivityColorClasses(at.color);
+                  return (
+                    <button
+                      key={at.key}
+                      onClick={() => onSelect(at.key)}
+                      className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all hover:shadow-sm active:scale-95 ${colors.bg} ${colors.border}`}
+                    >
+                      <span className="text-xl">{at.emoji}</span>
+                      <span className={`text-xs font-medium ${colors.text} leading-tight text-center`}>{at.label}</span>
+                    </button>
+                  );
+                })}
               </div>
-              <span className="text-xs font-medium leading-none">
-                {isLogged && activity.durationMinutes
-                  ? `${activity.durationMinutes}m`
-                  : label}
-              </span>
-            </button>
-          );
-        })}
+            </div>
+
+            {/* Custom option */}
+            <div className="px-4 py-3 border-t border-gray-100 dark:border-slate-700/50 flex-shrink-0">
+              <button
+                onClick={() => setCustomMode(true)}
+                className="w-full text-center text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 py-2"
+              >
+                + Custom activity
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -569,39 +626,54 @@ function ActivityModal({
 }: {
   type: string;
   existing: Activity | null;
-  onSave: (durationMinutes: number | null, notes: string | null) => void;
+  onSave: (durationMinutes: number | null, distanceKm: number | null, notes: string | null) => void;
   onDelete?: () => void;
   onClose: () => void;
 }) {
   const [duration, setDuration] = useState(existing?.durationMinutes?.toString() ?? '');
+  const [distance, setDistance] = useState(existing?.distanceKm?.toString() ?? '');
   const [notes, setNotes] = useState(existing?.notes ?? '');
 
-  const label = ACTIVITY_TYPES.find((a) => a.key === type)?.label ?? type;
+  const actType = getActivityType(type);
+  const colors = getActivityColorClasses(actType.color);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 dark:bg-black/60" onClick={onClose} />
       <div className="relative glass rounded-xl shadow-xl dark:shadow-glow w-full max-w-sm p-5 animate-scale-in">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="p-1.5 bg-blue-100 dark:bg-blue-500/15 rounded-full text-blue-600 dark:text-blue-400">
-            <ActivityIcon type={type} className="w-5 h-5" />
+        <div className="flex items-center gap-2.5 mb-4">
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${colors.bg} border ${colors.border}`}>
+            <span className="text-lg">{actType.emoji}</span>
           </div>
           <h3 className="font-semibold text-gray-900 dark:text-slate-100">
-            {existing ? `Edit ${label}` : `Log ${label}`}
+            {existing ? `Edit ${actType.label}` : `Log ${actType.label}`}
           </h3>
         </div>
 
         <div className="space-y-3">
-          <div>
-            <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1">Duration (minutes)</label>
-            <input
-              type="number"
-              value={duration}
-              onChange={(e) => setDuration(e.target.value)}
-              placeholder="e.g. 45"
-              autoFocus
-              className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:placeholder-slate-500"
-            />
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1">Duration (min)</label>
+              <input
+                type="number"
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                placeholder="e.g. 45"
+                autoFocus
+                className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:placeholder-slate-500"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1">Distance (km)</label>
+              <input
+                type="number"
+                step="0.1"
+                value={distance}
+                onChange={(e) => setDistance(e.target.value)}
+                placeholder="optional"
+                className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:placeholder-slate-500"
+              />
+            </div>
           </div>
           <div>
             <label className="block text-sm text-gray-600 dark:text-slate-400 mb-1">Notes (optional)</label>
@@ -609,7 +681,7 @@ function ActivityModal({
               type="text"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="e.g. easy pace"
+              placeholder="e.g. easy pace, won 3-1"
               className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:placeholder-slate-500"
             />
           </div>
@@ -617,7 +689,11 @@ function ActivityModal({
 
         <div className="flex gap-2 mt-4">
           <button
-            onClick={() => onSave(duration ? Number(duration) : null, notes || null)}
+            onClick={() => onSave(
+              duration ? Number(duration) : null,
+              distance ? Number(distance) : null,
+              notes || null
+            )}
             className="flex-1 py-2.5 gradient-btn rounded-lg text-sm"
           >
             {existing ? 'Update' : 'Save'}
