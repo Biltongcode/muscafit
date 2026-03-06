@@ -8,6 +8,8 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.NOTIFICATION_FROM || 'Muscafit <onboarding@resend.dev>';
 const APP_URL = process.env.NEXTAUTH_URL || 'https://train.biltongcodes.com';
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 function escapeHtml(str: string): string {
   return str
     .replace(/&/g, '&amp;')
@@ -120,6 +122,7 @@ async function sendEveningReminders() {
         `,
       });
       console.log(`[Muscafit] Evening reminder sent to ${user.name} (${toEmail})`);
+      await sleep(600);
     } catch (err) {
       console.error(`[Muscafit] Failed to send evening reminder to ${user.name}:`, err);
     }
@@ -236,6 +239,7 @@ async function sendMorningSummaries() {
         `,
       });
       console.log(`[Muscafit] Morning summary sent to ${user.name} (${toEmail})`);
+      await sleep(600);
     } catch (err) {
       console.error(`[Muscafit] Failed to send morning summary to ${user.name}:`, err);
     }
@@ -479,6 +483,7 @@ async function sendWeeklySummaries() {
         `,
       });
       console.log(`[Muscafit] Weekly summary sent to ${user.name} (${toEmail})`);
+      await sleep(600);
     } catch (err) {
       console.error(`[Muscafit] Failed to send weekly summary to ${user.name}:`, err);
     }
