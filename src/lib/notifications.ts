@@ -428,6 +428,11 @@ async function sendWeeklySummaries() {
       GROUP BY activity_type
     `).all(user.id, start, end) as Array<{ activity_type: string; count: number; total_mins: number | null }>;
 
+    // Clear any stale cached insight for this week so we regenerate with complete data
+    try {
+      db.prepare('DELETE FROM weekly_insights WHERE user_id = ? AND week_start = ?').run(user.id, start);
+    } catch { /* ignore */ }
+
     let aiInsightHtml = '';
     if (ownExercises.length > 0 || ownActivities.length > 0) {
       const insight = await generateWeeklyInsight({

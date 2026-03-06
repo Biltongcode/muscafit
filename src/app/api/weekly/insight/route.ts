@@ -19,13 +19,22 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'start and end params required' }, { status: 400 });
   }
 
-  // Check cache first
-  const cached = db.prepare(
-    'SELECT insight FROM weekly_insights WHERE user_id = ? AND week_start = ?'
-  ).get(userId, start) as { insight: string } | undefined;
+  // Only use cache for completed (past) weeks — current week always regenerates fresh
+  const today = new Date();
+  const currentMonday = new Date(today);
+  const dayOfWeek = currentMonday.getDay();
+  currentMonday.setDate(currentMonday.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+  const currentMondayStr = `${currentMonday.getFullYear()}-${String(currentMonday.getMonth() + 1).padStart(2, '0')}-${String(currentMonday.getDate()).padStart(2, '0')}`;
+  const isCurrentWeek = start === currentMondayStr;
 
-  if (cached) {
-    return NextResponse.json({ insight: cached.insight });
+  if (!isCurrentWeek) {
+    const cached = db.prepare(
+      'SELECT insight FROM weekly_insights WHERE user_id = ? AND week_start = ?'
+    ).get(userId, start) as { insight: string } | undefined;
+
+    if (cached) {
+      return NextResponse.json({ insight: cached.insight });
+    }
   }
 
   // Query exercise stats for this user's week
