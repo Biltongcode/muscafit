@@ -1,7 +1,5 @@
 'use client';
 
-import Image from 'next/image';
-
 interface AvatarProps {
   name: string;
   avatarUrl?: string | null;
@@ -15,12 +13,6 @@ const sizeMap = {
   lg: 'w-10 h-10 text-sm',
 };
 
-const pxMap = {
-  sm: 24,
-  md: 32,
-  lg: 40,
-};
-
 export default function Avatar({ name, avatarUrl, size = 'md', className = '' }: AvatarProps) {
   const initials = name
     .split(' ')
@@ -30,16 +22,14 @@ export default function Avatar({ name, avatarUrl, size = 'md', className = '' }:
     .slice(0, 2);
 
   const sizeClass = sizeMap[size];
-  const px = pxMap[size];
 
   if (avatarUrl) {
     return (
       <div className={`${sizeClass} relative rounded-full overflow-hidden ring-2 ring-white/20 dark:ring-slate-600/50 flex-shrink-0 ${className}`}>
-        <Image
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
           src={avatarUrl}
           alt={name}
-          width={px}
-          height={px}
           className="object-cover w-full h-full"
         />
       </div>
