@@ -192,7 +192,7 @@ export default function WeeklyView({ currentUserId, currentUserName }: WeeklyVie
           )}
         </div>
 
-        {/* AI Coach Insight */}
+        {/* Coach Insight */}
         {insightLoading ? (
           <div className="glass rounded-xl p-4 mb-4 animate-pulse">
             <div className="flex items-center gap-2 mb-2">
@@ -211,7 +211,7 @@ export default function WeeklyView({ currentUserId, currentUserName }: WeeklyVie
                 <path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z" />
               </svg>
               <div>
-                <span className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">AI Coach</span>
+                <span className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Coach</span>
                 <p className="text-sm text-gray-700 dark:text-slate-300 mt-1 leading-relaxed">{insight}</p>
               </div>
             </div>

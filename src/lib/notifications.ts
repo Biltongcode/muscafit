@@ -450,7 +450,7 @@ async function sendWeeklySummaries() {
 
         aiInsightHtml = `
           <div style="background: #f0f4ff; border-left: 4px solid #6C8EFF; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px;">
-            <p style="margin: 0 0 4px; font-size: 11px; color: #6C8EFF; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">AI Coach</p>
+            <p style="margin: 0 0 4px; font-size: 11px; color: #6C8EFF; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Coach</p>
             <p style="margin: 0; color: #333; font-size: 14px; line-height: 1.6;">${escapeHtml(insight)}</p>
           </div>`;
       }
