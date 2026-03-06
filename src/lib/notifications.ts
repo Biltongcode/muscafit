@@ -436,6 +436,7 @@ async function sendWeeklySummaries() {
     let aiInsightHtml = '';
     if (ownExercises.length > 0 || ownActivities.length > 0) {
       const insight = await generateWeeklyInsight({
+        userId: user.id,
         userName: user.name,
         weekLabel: weekFormatted,
         exercises: ownExercises,

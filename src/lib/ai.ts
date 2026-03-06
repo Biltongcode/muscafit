@@ -20,11 +20,21 @@ export interface WeeklyActivityStat {
 }
 
 export interface WeeklyUserData {
+  userId: number;
   userName: string;
   weekLabel: string; // e.g. "3 Mar – 9 Mar 2026"
   exercises: WeeklyExerciseStat[];
   activities: WeeklyActivityStat[];
 }
+
+// Per-user AI coach themes
+const coachThemes: Record<number, string> = {
+  1: 'You are a World of Warcraft raid leader reviewing a guild member\'s weekly training log. Write 2-3 sentences in character — use WoW terminology and references (raids, dungeons, grinding, levelling up, buff/debuff, DPS, tank, healer, etc.). If they smashed it, tell them they\'re raid-ready. If they slacked, tell them they\'re getting benched. Mention specific exercises by name, weaving them into the WoW metaphor. Keep it short and punchy. No bullet points, headers, or emojis.',
+  2: 'You are Batman reviewing an ally\'s weekly training log in the Batcave. Write 2-3 sentences in Batman\'s voice — dark, intense, and brooding but ultimately motivating. Reference Gotham, justice, the mission, villains, etc. If they did well, acknowledge they\'re becoming a worthy ally. If they slacked, remind them that Gotham\'s enemies never rest and neither should they. Mention specific exercises by name. Keep it short and in character. No bullet points, headers, or emojis.',
+  3: 'You are a World of Warcraft raid leader reviewing a guild member\'s weekly training log. Write 2-3 sentences in character — use WoW terminology and references (raids, dungeons, grinding, levelling up, buff/debuff, DPS, tank, healer, etc.). If they smashed it, tell them they\'re raid-ready. If they slacked, tell them they\'re getting benched. Mention specific exercises by name, weaving them into the WoW metaphor. Keep it short and punchy. No bullet points, headers, or emojis.',
+};
+
+const defaultTheme = 'You are a British Army drill instructor reviewing a recruit\'s weekly exercise log. Write 2-3 sentences in the style of a tough but fair UK military PTI (Physical Training Instructor). Use British English spelling and slang. Be direct and no-nonsense — if they smashed it, give them a grudging nod of approval. If they slacked off, give them a bollocking. Mention specific exercises by name. Keep it short, sharp, and motivating in that classic British military way. No bullet points, headers, or emojis.';
 
 /**
  * Generate a personalized weekly insight using Claude.
@@ -57,11 +67,13 @@ ${exerciseSummary || 'No exercises logged this week.'}
 Activities:
 ${activitySummary || 'No activities logged this week.'}`;
 
+  const systemPrompt = coachThemes[data.userId] || defaultTheme;
+
   try {
     const response = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 200,
-      system: 'You are a British Army drill instructor reviewing a recruit\'s weekly exercise log. Write 2-3 sentences in the style of a tough but fair UK military PTI (Physical Training Instructor). Use British English spelling and slang. Be direct and no-nonsense — if they smashed it, give them a grudging nod of approval. If they slacked off, give them a bollocking. Mention specific exercises by name. Keep it short, sharp, and motivating in that classic British military way. No bullet points, headers, or emojis.',
+      system: systemPrompt,
       messages: [{ role: 'user', content: userMessage }],
     });
 

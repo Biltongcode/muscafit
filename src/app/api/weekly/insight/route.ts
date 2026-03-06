@@ -75,6 +75,7 @@ export async function GET(req: NextRequest) {
   const userName = session.user.name || 'there';
 
   const insight = await generateWeeklyInsight({
+    userId,
     userName,
     weekLabel,
     exercises,
