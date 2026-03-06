@@ -200,6 +200,9 @@ db.exec(`
   );
 `);
 
+// Safe migration: add canonical_name for shared exercise catalogue
+try { db.exec(`ALTER TABLE exercises ADD COLUMN canonical_name TEXT`); } catch {}
+
 // AI insights cache
 db.exec(`
   CREATE TABLE IF NOT EXISTS weekly_insights (

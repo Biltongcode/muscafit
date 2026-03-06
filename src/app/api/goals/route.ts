@@ -39,10 +39,10 @@ function computeProgress(goal: GoalRow, visibleIds: number[]): number {
       ), 0) as current_value
       FROM exercise_logs el
       JOIN exercises e ON e.id = el.exercise_id
-      WHERE LOWER(TRIM(e.name)) = LOWER(TRIM(?))
+      WHERE (e.canonical_name = ? OR LOWER(TRIM(e.name)) = LOWER(TRIM(?)))
         AND el.log_date >= ? AND el.log_date <= ?
         AND el.user_id IN ${inPlaceholders(visibleIds)}
-    `).get(goal.exercise_name, start, end, ...visibleIds) as { current_value: number };
+    `).get(goal.exercise_name, goal.exercise_name, start, end, ...visibleIds) as { current_value: number };
     return result.current_value;
   }
 
@@ -56,9 +56,9 @@ function computeProgress(goal: GoalRow, visibleIds: number[]): number {
     FROM exercise_logs el
     JOIN exercises e ON e.id = el.exercise_id
     WHERE el.user_id = ?
-      AND LOWER(TRIM(e.name)) = LOWER(TRIM(?))
+      AND (e.canonical_name = ? OR LOWER(TRIM(e.name)) = LOWER(TRIM(?)))
       AND el.log_date >= ? AND el.log_date <= ?
-  `).get(goal.user_id, goal.exercise_name, start, end) as { current_value: number };
+  `).get(goal.user_id, goal.exercise_name, goal.exercise_name, start, end) as { current_value: number };
   return result.current_value;
 }
 

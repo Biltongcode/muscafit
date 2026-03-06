@@ -37,9 +37,9 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Query exercise stats for this user's week
+  // Query exercise stats for this user's week (using canonical_name for consistent naming)
   const exercises = db.prepare(`
-    SELECT e.name,
+    SELECT COALESCE(e.canonical_name, e.name) as name,
       COUNT(CASE WHEN el.completed = 1 THEN 1 END) as days_done,
       COUNT(*) as days_total,
       SUM(CASE WHEN el.completed = 1 THEN COALESCE(el.actual_value, e.target_value, 0) ELSE 0 END) as total_value,
@@ -50,8 +50,8 @@ export async function GET(req: NextRequest) {
     FROM exercise_logs el
     JOIN exercises e ON e.id = el.exercise_id
     WHERE el.user_id = ? AND el.log_date >= ? AND el.log_date <= ? AND e.is_active = 1
-    GROUP BY e.name
-    ORDER BY e.name
+    GROUP BY COALESCE(e.canonical_name, e.name)
+    ORDER BY COALESCE(e.canonical_name, e.name)
   `).all(userId, start, end) as WeeklyExerciseStat[];
 
   const activities = db.prepare(`

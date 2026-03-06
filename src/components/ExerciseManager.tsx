@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import NavBar from './NavBar';
+import CataloguePicker from './CataloguePicker';
 
 interface Exercise {
   id: number;
@@ -16,6 +17,7 @@ interface Exercise {
   schedule_days: string | null;
   target_weight: number | null;
   weight_unit: string | null;
+  canonical_name: string | null;
 }
 
 interface ExerciseManagerProps {
@@ -64,6 +66,7 @@ function formatTarget(ex: Exercise): string {
 
 interface EditFormData {
   name: string;
+  canonicalName: string | null;
   targetType: string;
   targetValue: string;
   targetSets: string;
@@ -75,12 +78,13 @@ interface EditFormData {
 }
 
 function emptyForm(): EditFormData {
-  return { name: '', targetType: 'reps', targetValue: '', targetSets: '', targetPerSet: '', notes: '', scheduleDays: '', targetWeight: '', weightUnit: 'kg' };
+  return { name: '', canonicalName: null, targetType: 'reps', targetValue: '', targetSets: '', targetPerSet: '', notes: '', scheduleDays: '', targetWeight: '', weightUnit: 'kg' };
 }
 
 function exerciseToForm(ex: Exercise): EditFormData {
   return {
     name: ex.name,
+    canonicalName: ex.canonical_name ?? null,
     targetType: ex.target_type,
     targetValue: ex.target_value?.toString() ?? '',
     targetSets: ex.target_sets?.toString() ?? '',
@@ -110,6 +114,7 @@ export default function ExerciseManager({ currentUserId, currentUserName }: Exer
   const [browseUserName, setBrowseUserName] = useState('');
   const [browseLoading, setBrowseLoading] = useState(false);
   const [copiedIds, setCopiedIds] = useState<Set<number>>(new Set());
+  const [showCatalogue, setShowCatalogue] = useState(false);
 
   const fetchExercises = useCallback(async () => {
     setLoading(true);
@@ -180,6 +185,7 @@ export default function ExerciseManager({ currentUserId, currentUserName }: Exer
           scheduleDays: ex.schedule_days,
           targetWeight: ex.target_weight,
           weightUnit: ex.weight_unit,
+          canonicalName: ex.canonical_name,
         }),
       });
       setCopiedIds((prev) => new Set(prev).add(ex.id));
@@ -200,14 +206,27 @@ export default function ExerciseManager({ currentUserId, currentUserName }: Exer
   };
 
   const startAdd = () => {
-    setAdding(true);
+    setShowCatalogue(true);
     setEditingId(null);
+    setForm(emptyForm());
+  };
+
+  const handleCatalogueSelect = (name: string, canonicalName: string, defaultTargetType: string) => {
+    setShowCatalogue(false);
+    setAdding(true);
+    setForm({ ...emptyForm(), name, canonicalName, targetType: defaultTargetType });
+  };
+
+  const handleCustomExercise = () => {
+    setShowCatalogue(false);
+    setAdding(true);
     setForm(emptyForm());
   };
 
   const cancelEdit = () => {
     setEditingId(null);
     setAdding(false);
+    setShowCatalogue(false);
     setForm(emptyForm());
   };
 
@@ -225,6 +244,7 @@ export default function ExerciseManager({ currentUserId, currentUserName }: Exer
 
     const payload = {
       name: form.name.trim(),
+      canonicalName: form.canonicalName,
       targetType: form.targetType,
       targetValue: computedTargetValue,
       targetSets: showSets && form.targetSets ? Number(form.targetSets) : null,
@@ -311,7 +331,7 @@ export default function ExerciseManager({ currentUserId, currentUserName }: Exer
       <div className="max-w-2xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">My Exercises</h2>
-          {!adding && (
+          {!adding && !showCatalogue && (
             <button
               onClick={startAdd}
               className="px-4 py-2.5 text-sm font-medium gradient-btn rounded-lg transition-colors"
@@ -412,6 +432,16 @@ export default function ExerciseManager({ currentUserId, currentUserName }: Exer
               );
             })}
 
+            {/* Catalogue picker */}
+            {showCatalogue && (
+              <CataloguePicker
+                onSelect={handleCatalogueSelect}
+                onCustom={handleCustomExercise}
+                onCancel={cancelEdit}
+                existingNames={exercises.map(e => e.name)}
+              />
+            )}
+
             {/* Add new exercise form */}
             {adding && (
               <ExerciseForm
@@ -421,7 +451,7 @@ export default function ExerciseManager({ currentUserId, currentUserName }: Exer
                 onSave={saveExercise}
                 onCancel={cancelEdit}
                 saving={saving}
-                title="New Exercise"
+                title={form.canonicalName ? `New Exercise — ${form.canonicalName}` : 'New Custom Exercise'}
               />
             )}
 

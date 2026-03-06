@@ -16,10 +16,10 @@ export async function GET(req: NextRequest) {
   const sessionUserId = Number(session.user.id);
   const visibleIds = getVisibleUserIds(sessionUserId);
 
-  // Exercise totals grouped by exercise name and user
+  // Exercise totals grouped by exercise name and user (using canonical_name for collation)
   const exerciseRows = db.prepare(`
     SELECT
-      e.name as exercise_name,
+      COALESCE(e.canonical_name, e.name) as exercise_name,
       e.target_type,
       e.target_weight,
       e.weight_unit,
@@ -33,8 +33,8 @@ export async function GET(req: NextRequest) {
     JOIN users u ON u.id = el.user_id
     WHERE el.log_date >= ? AND el.log_date <= ?
       AND el.user_id IN ${inPlaceholders(visibleIds)}
-    GROUP BY e.name, el.user_id
-    ORDER BY e.name, el.user_id
+    GROUP BY COALESCE(e.canonical_name, e.name), el.user_id
+    ORDER BY COALESCE(e.canonical_name, e.name), el.user_id
   `).all(start, end, ...visibleIds) as Array<{
     exercise_name: string;
     target_type: string;

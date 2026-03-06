@@ -151,7 +151,7 @@ async function sendMorningSummaries() {
 
     for (const other of otherUsers) {
       const exercises = db.prepare(`
-        SELECT e.name, el.completed
+        SELECT COALESCE(e.canonical_name, e.name) as name, el.completed
         FROM exercise_logs el
         JOIN exercises e ON e.id = el.exercise_id
         WHERE el.user_id = ? AND el.log_date = ?
@@ -285,7 +285,7 @@ async function sendWeeklySummaries() {
     const userSections: string[] = [];
     for (const u of visibleUsers) {
       const exercises = db.prepare(`
-        SELECT e.name,
+        SELECT COALESCE(e.canonical_name, e.name) as name,
           COUNT(CASE WHEN el.completed = 1 THEN 1 END) as days_done,
           COUNT(*) as days_total,
           SUM(CASE WHEN el.completed = 1 THEN COALESCE(el.actual_value, e.target_value, 0) ELSE 0 END) as total_value,
@@ -296,8 +296,8 @@ async function sendWeeklySummaries() {
         FROM exercise_logs el
         JOIN exercises e ON e.id = el.exercise_id
         WHERE el.user_id = ? AND el.log_date >= ? AND el.log_date <= ?
-        GROUP BY e.name
-        ORDER BY e.name
+        GROUP BY COALESCE(e.canonical_name, e.name)
+        ORDER BY COALESCE(e.canonical_name, e.name)
       `).all(u.id, start, end) as Array<{ name: string; days_done: number; days_total: number; total_value: number; target_type: string; target_weight: number | null; weight_unit: string | null; total_volume: number }>;
 
       const activities = db.prepare(`
@@ -375,16 +375,16 @@ async function sendWeeklySummaries() {
           const row = db.prepare(`
             SELECT SUM(CASE WHEN el.completed = 1 THEN COALESCE(el.actual_value, e.target_value, 0) ELSE 0 END) as total
             FROM exercise_logs el JOIN exercises e ON e.id = el.exercise_id
-            WHERE LOWER(TRIM(e.name)) = LOWER(TRIM(?)) AND el.log_date >= ? AND el.log_date <= ?
+            WHERE (e.canonical_name = ? OR LOWER(TRIM(e.name)) = LOWER(TRIM(?))) AND el.log_date >= ? AND el.log_date <= ?
               AND el.user_id IN ${inPlaceholders(visibleIds)}
-          `).get(goal.exercise_name, goalStart, goalEnd, ...visibleIds) as { total: number | null };
+          `).get(goal.exercise_name, goal.exercise_name, goalStart, goalEnd, ...visibleIds) as { total: number | null };
           currentValue = row?.total || 0;
         } else {
           const row = db.prepare(`
             SELECT SUM(CASE WHEN el.completed = 1 THEN COALESCE(el.actual_value, e.target_value, 0) ELSE 0 END) as total
             FROM exercise_logs el JOIN exercises e ON e.id = el.exercise_id
-            WHERE LOWER(TRIM(e.name)) = LOWER(TRIM(?)) AND el.user_id = ? AND el.log_date >= ? AND el.log_date <= ?
-          `).get(goal.exercise_name, goal.user_id, goalStart, goalEnd) as { total: number | null };
+            WHERE (e.canonical_name = ? OR LOWER(TRIM(e.name)) = LOWER(TRIM(?))) AND el.user_id = ? AND el.log_date >= ? AND el.log_date <= ?
+          `).get(goal.exercise_name, goal.exercise_name, goal.user_id, goalStart, goalEnd) as { total: number | null };
           currentValue = row?.total || 0;
         }
 
@@ -415,7 +415,7 @@ async function sendWeeklySummaries() {
 
     // Generate AI insight for this user
     const ownExercises = db.prepare(`
-      SELECT e.name,
+      SELECT COALESCE(e.canonical_name, e.name) as name,
         COUNT(CASE WHEN el.completed = 1 THEN 1 END) as days_done,
         COUNT(*) as days_total,
         SUM(CASE WHEN el.completed = 1 THEN COALESCE(el.actual_value, e.target_value, 0) ELSE 0 END) as total_value,
@@ -423,7 +423,7 @@ async function sendWeeklySummaries() {
         SUM(CASE WHEN el.completed = 1 THEN COALESCE(el.actual_value, e.target_value, 0) * COALESCE(el.actual_weight, e.target_weight, 0) ELSE 0 END) as total_volume
       FROM exercise_logs el JOIN exercises e ON e.id = el.exercise_id
       WHERE el.user_id = ? AND el.log_date >= ? AND el.log_date <= ? AND e.is_active = 1
-      GROUP BY e.name ORDER BY e.name
+      GROUP BY COALESCE(e.canonical_name, e.name) ORDER BY COALESCE(e.canonical_name, e.name)
     `).all(user.id, start, end) as Array<{ name: string; days_done: number; days_total: number; total_value: number; target_type: string; target_weight: number | null; weight_unit: string | null; total_volume: number }>;
 
     const ownActivities = db.prepare(`
@@ -513,7 +513,7 @@ export async function sendTestEmail(userId: number, type: 'evening' | 'morning' 
     const userSections: string[] = [];
     for (const u of visibleUsers) {
       const exercises = db.prepare(`
-        SELECT e.name,
+        SELECT COALESCE(e.canonical_name, e.name) as name,
           COUNT(CASE WHEN el.completed = 1 THEN 1 END) as days_done,
           COUNT(*) as days_total,
           SUM(CASE WHEN el.completed = 1 THEN COALESCE(el.actual_value, e.target_value, 0) ELSE 0 END) as total_value,
@@ -524,7 +524,7 @@ export async function sendTestEmail(userId: number, type: 'evening' | 'morning' 
         FROM exercise_logs el
         JOIN exercises e ON e.id = el.exercise_id
         WHERE el.user_id = ? AND el.log_date >= ? AND el.log_date <= ?
-        GROUP BY e.name ORDER BY e.name
+        GROUP BY COALESCE(e.canonical_name, e.name) ORDER BY COALESCE(e.canonical_name, e.name)
       `).all(u.id, start, today) as Array<{ name: string; days_done: number; days_total: number; total_value: number; target_type: string; target_weight: number | null; weight_unit: string | null; total_volume: number }>;
 
       const activities = db.prepare(`
@@ -637,7 +637,7 @@ export async function sendTestEmail(userId: number, type: 'evening' | 'morning' 
   const summaryParts: string[] = [];
   for (const other of otherUsers) {
     const exercises = db.prepare(`
-      SELECT e.name, el.completed
+      SELECT COALESCE(e.canonical_name, e.name) as name, el.completed
       FROM exercise_logs el
       JOIN exercises e ON e.id = el.exercise_id
       WHERE el.user_id = ? AND el.log_date = ?
