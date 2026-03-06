@@ -169,6 +169,9 @@ try { db.exec(`UPDATE users SET role = 'admin' WHERE id = 1 AND role = 'user'`);
 // Safe migration: add canonical_name for shared exercise catalogue
 try { db.exec(`ALTER TABLE exercises ADD COLUMN canonical_name TEXT`); } catch {}
 
+// Safe migration: add status column for planned activities
+try { db.exec(`ALTER TABLE activity_sessions ADD COLUMN status TEXT DEFAULT 'completed'`); } catch {}
+
 // AI insights cache
 db.exec(`
   CREATE TABLE IF NOT EXISTS weekly_insights (

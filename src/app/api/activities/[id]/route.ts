@@ -21,21 +21,34 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 
   const body = await req.json();
-  const { durationMinutes, distanceKm, notes } = body;
+  const { durationMinutes, distanceKm, notes, status } = body;
 
-  db.prepare(
-    `UPDATE activity_sessions SET
-       duration_minutes = ?,
-       distance_km = ?,
-       notes = ?
-     WHERE id = ? AND user_id = ?`
-  ).run(durationMinutes ?? null, distanceKm ?? null, notes ?? null, activityId, userId);
+  // If status is provided, update it too (e.g. marking planned → completed)
+  if (status === 'completed' || status === 'planned') {
+    db.prepare(
+      `UPDATE activity_sessions SET
+         duration_minutes = ?,
+         distance_km = ?,
+         notes = ?,
+         status = ?
+       WHERE id = ? AND user_id = ?`
+    ).run(durationMinutes ?? null, distanceKm ?? null, notes ?? null, status, activityId, userId);
+  } else {
+    db.prepare(
+      `UPDATE activity_sessions SET
+         duration_minutes = ?,
+         distance_km = ?,
+         notes = ?
+       WHERE id = ? AND user_id = ?`
+    ).run(durationMinutes ?? null, distanceKm ?? null, notes ?? null, activityId, userId);
+  }
 
   const activity = db
     .prepare(
       `SELECT id, user_id as userId, activity_type as activityType,
               duration_minutes as durationMinutes, distance_km as distanceKm,
-              notes, session_date as sessionDate
+              notes, session_date as sessionDate,
+              COALESCE(status, 'completed') as status
        FROM activity_sessions WHERE id = ?`
     )
     .get(activityId);

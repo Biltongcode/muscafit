@@ -22,11 +22,12 @@ export async function GET(req: NextRequest) {
     .prepare(
       `SELECT a.id, a.user_id as userId, a.activity_type as activityType,
               a.duration_minutes as durationMinutes, a.distance_km as distanceKm,
-              a.notes, a.session_date as sessionDate
+              a.notes, a.session_date as sessionDate,
+              COALESCE(a.status, 'completed') as status
        FROM activity_sessions a
        WHERE a.session_date = ?
          AND a.user_id IN ${inPlaceholders(visibleIds)}
-       ORDER BY a.created_at`
+       ORDER BY a.status DESC, a.created_at`
     )
     .all(date, ...visibleIds);
 
@@ -40,26 +41,28 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { date, activityType, durationMinutes, distanceKm, notes } = body;
+  const { date, activityType, durationMinutes, distanceKm, notes, status } = body;
 
   if (!date || !activityType) {
     return NextResponse.json({ error: 'date and activityType required' }, { status: 400 });
   }
 
   const userId = Number(session.user.id);
+  const activityStatus = status === 'planned' ? 'planned' : 'completed';
 
   const result = db
     .prepare(
-      `INSERT INTO activity_sessions (user_id, session_date, activity_type, duration_minutes, distance_km, notes)
-       VALUES (?, ?, ?, ?, ?, ?)`
+      `INSERT INTO activity_sessions (user_id, session_date, activity_type, duration_minutes, distance_km, notes, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
     )
-    .run(userId, date, activityType, durationMinutes ?? null, distanceKm ?? null, notes ?? null);
+    .run(userId, date, activityType, durationMinutes ?? null, distanceKm ?? null, notes ?? null, activityStatus);
 
   const activity = db
     .prepare(
       `SELECT id, user_id as userId, activity_type as activityType,
               duration_minutes as durationMinutes, distance_km as distanceKm,
-              notes, session_date as sessionDate
+              notes, session_date as sessionDate,
+              COALESCE(status, 'completed') as status
        FROM activity_sessions WHERE id = ?`
     )
     .get(result.lastInsertRowid);

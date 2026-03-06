@@ -43,6 +43,7 @@ interface Activity {
   distanceKm: number | null;
   notes: string | null;
   sessionDate: string;
+  status: 'planned' | 'completed';
 }
 
 interface Comment {
@@ -223,22 +224,28 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
     setActivityModal({ userId: currentUserId, type, existing: null });
   };
 
-  const saveActivity = async (durationMinutes: number | null, distanceKm: number | null, notes: string | null) => {
+  const isFutureDate = date > getTodayStr();
+
+  const saveActivity = async (durationMinutes: number | null, distanceKm: number | null, notes: string | null, markDone?: boolean) => {
     if (!activityModal) return;
     const { type, existing } = activityModal;
 
     try {
       if (existing) {
+        // If marking a planned activity as done, set status to completed
+        const updateStatus = markDone ? 'completed' : existing.status;
         await fetch(`/api/activities/${existing.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ durationMinutes, distanceKm, notes }),
+          body: JSON.stringify({ durationMinutes, distanceKm, notes, status: updateStatus }),
         });
       } else {
+        // New activity: planned if future date, completed otherwise
+        const status = isFutureDate ? 'planned' : 'completed';
         await fetch('/api/activities', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ date, activityType: type, durationMinutes, distanceKm, notes }),
+          body: JSON.stringify({ date, activityType: type, durationMinutes, distanceKm, notes, status }),
         });
       }
       await fetchData();
@@ -399,6 +406,7 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
                   <ActivityCards
                     userActivities={userActivities}
                     isOwn={isOwn}
+                    isFutureDate={isFutureDate}
                     onCardClick={handleActivityCardClick}
                     onAddClick={() => setShowActivityPicker(true)}
                   />
@@ -428,6 +436,7 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
         <ActivityModal
           type={activityModal.type}
           existing={activityModal.existing}
+          isFutureDate={isFutureDate}
           onSave={saveActivity}
           onDelete={activityModal.existing ? deleteActivity : undefined}
           onClose={() => setActivityModal(null)}
@@ -442,11 +451,13 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
 function ActivityCards({
   userActivities,
   isOwn,
+  isFutureDate,
   onCardClick,
   onAddClick,
 }: {
   userActivities: Activity[];
   isOwn: boolean;
+  isFutureDate: boolean;
   onCardClick: (activity: Activity) => void;
   onAddClick: () => void;
 }) {
@@ -459,23 +470,31 @@ function ActivityCards({
           {userActivities.map((activity) => {
             const actType = getActivityType(activity.activityType);
             const colors = getActivityColorClasses(actType.color);
+            const isPlanned = activity.status === 'planned';
 
             return (
               <button
                 key={activity.id}
                 onClick={() => onCardClick(activity)}
                 disabled={!isOwn}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all ${colors.bg} ${colors.border} ${
-                  isOwn ? 'cursor-pointer hover:shadow-sm active:scale-[0.98]' : 'cursor-default'
-                }`}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
+                  isPlanned
+                    ? `border-2 border-dashed ${colors.border} bg-white/50 dark:bg-slate-900/30`
+                    : `border ${colors.bg} ${colors.border}`
+                } ${isOwn ? 'cursor-pointer hover:shadow-sm active:scale-[0.98]' : 'cursor-default'}`}
               >
-                <span className="text-lg flex-shrink-0" role="img" aria-label={actType.label}>
+                <span className={`text-lg flex-shrink-0 ${isPlanned ? 'opacity-60' : ''}`} role="img" aria-label={actType.label}>
                   {actType.emoji}
                 </span>
-                <span className={`text-sm font-medium ${colors.text} flex-shrink-0`}>
+                <span className={`text-sm font-medium flex-shrink-0 ${isPlanned ? 'text-gray-500 dark:text-slate-400' : colors.text}`}>
                   {actType.label}
                 </span>
                 <div className="flex items-center gap-2 ml-auto text-xs">
+                  {isPlanned && (
+                    <span className="px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-slate-700/50 text-gray-500 dark:text-slate-400 text-[10px] font-semibold uppercase tracking-wider">
+                      Planned
+                    </span>
+                  )}
                   {activity.durationMinutes != null && (
                     <span className={`font-medium ${colors.text}`}>
                       {activity.durationMinutes}m
@@ -506,7 +525,7 @@ function ActivityCards({
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          Log activity
+          {isFutureDate ? 'Plan activity' : 'Log activity'}
         </button>
       )}
     </div>
@@ -620,13 +639,15 @@ function ActivityPicker({
 function ActivityModal({
   type,
   existing,
+  isFutureDate,
   onSave,
   onDelete,
   onClose,
 }: {
   type: string;
   existing: Activity | null;
-  onSave: (durationMinutes: number | null, distanceKm: number | null, notes: string | null) => void;
+  isFutureDate: boolean;
+  onSave: (durationMinutes: number | null, distanceKm: number | null, notes: string | null, markDone?: boolean) => void;
   onDelete?: () => void;
   onClose: () => void;
 }) {
@@ -636,6 +657,17 @@ function ActivityModal({
 
   const actType = getActivityType(type);
   const colors = getActivityColorClasses(actType.color);
+  const isPlanned = existing?.status === 'planned';
+  // Can mark done if it's a planned activity and the date is today or in the past
+  const canMarkDone = isPlanned && !isFutureDate;
+
+  // Title logic
+  let title: string;
+  if (existing) {
+    title = isPlanned ? `Planned ${actType.label}` : `Edit ${actType.label}`;
+  } else {
+    title = isFutureDate ? `Plan ${actType.label}` : `Log ${actType.label}`;
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -646,7 +678,7 @@ function ActivityModal({
             <span className="text-lg">{actType.emoji}</span>
           </div>
           <h3 className="font-semibold text-gray-900 dark:text-slate-100">
-            {existing ? `Edit ${actType.label}` : `Log ${actType.label}`}
+            {title}
           </h3>
         </div>
 
@@ -687,31 +719,47 @@ function ActivityModal({
           </div>
         </div>
 
-        <div className="flex gap-2 mt-4">
-          <button
-            onClick={() => onSave(
-              duration ? Number(duration) : null,
-              distance ? Number(distance) : null,
-              notes || null
-            )}
-            className="flex-1 py-2.5 gradient-btn rounded-lg text-sm"
-          >
-            {existing ? 'Update' : 'Save'}
-          </button>
-          {onDelete && (
+        <div className="flex flex-col gap-2 mt-4">
+          {/* Mark as done — prominent green button for planned activities on today/past */}
+          {canMarkDone && (
             <button
-              onClick={onDelete}
-              className="px-3 py-2.5 text-red-600 dark:text-red-400 text-sm font-medium rounded-lg border border-red-200 dark:border-red-500/30 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+              onClick={() => onSave(
+                duration ? Number(duration) : null,
+                distance ? Number(distance) : null,
+                notes || null,
+                true
+              )}
+              className="w-full py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg text-sm font-semibold transition-all active:scale-[0.98] shadow-sm"
             >
-              Remove
+              Mark as done
             </button>
           )}
-          <button
-            onClick={onClose}
-            className="px-3 py-2.5 text-gray-600 dark:text-slate-400 text-sm rounded-lg border border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors"
-          >
-            Cancel
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => onSave(
+                duration ? Number(duration) : null,
+                distance ? Number(distance) : null,
+                notes || null
+              )}
+              className="flex-1 py-2.5 gradient-btn rounded-lg text-sm"
+            >
+              {existing ? 'Update' : isFutureDate ? 'Plan' : 'Save'}
+            </button>
+            {onDelete && (
+              <button
+                onClick={onDelete}
+                className="px-3 py-2.5 text-red-600 dark:text-red-400 text-sm font-medium rounded-lg border border-red-200 dark:border-red-500/30 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+              >
+                Remove
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="px-3 py-2.5 text-gray-600 dark:text-slate-400 text-sm rounded-lg border border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       </div>
     </div>
