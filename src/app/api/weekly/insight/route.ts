@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
       SUM(CASE WHEN el.completed = 1 THEN COALESCE(el.actual_value, e.target_value, 0) * COALESCE(el.actual_weight, e.target_weight, 0) ELSE 0 END) as total_volume
     FROM exercise_logs el
     JOIN exercises e ON e.id = el.exercise_id
-    WHERE el.user_id = ? AND el.log_date >= ? AND el.log_date <= ?
+    WHERE el.user_id = ? AND el.log_date >= ? AND el.log_date <= ? AND e.is_active = 1
     GROUP BY e.name
     ORDER BY e.name
   `).all(userId, start, end) as WeeklyExerciseStat[];

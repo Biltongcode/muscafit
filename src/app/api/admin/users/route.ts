@@ -21,7 +21,7 @@ export async function GET() {
       (SELECT COUNT(DISTINCT el.log_date) FROM exercise_logs el
        WHERE el.user_id = u.id AND el.completed = 1) as active_days,
       (SELECT COUNT(*) FROM exercises ex
-       WHERE ex.user_id = u.id AND ex.active = 1) as exercise_count,
+       WHERE ex.user_id = u.id AND ex.is_active = 1) as exercise_count,
       (SELECT COUNT(*) FROM user_connections uc
        WHERE uc.user_id = u.id) as connection_count
     FROM users u
