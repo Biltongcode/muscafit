@@ -200,4 +200,16 @@ db.exec(`
   );
 `);
 
+// AI insights cache
+db.exec(`
+  CREATE TABLE IF NOT EXISTS weekly_insights (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    week_start TEXT NOT NULL,
+    insight TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, week_start)
+  );
+`);
+
 export default db;

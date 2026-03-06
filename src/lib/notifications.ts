@@ -2,6 +2,7 @@ import cron from 'node-cron';
 import { Resend } from 'resend';
 import db from './db';
 import { getConnectedUserIds, getVisibleUserIds, inPlaceholders } from './connections';
+import { generateWeeklyInsight } from './ai';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.NOTIFICATION_FROM || 'Muscafit <onboarding@resend.dev>';
@@ -408,6 +409,47 @@ async function sendWeeklySummaries() {
 
     const weekFormatted = `${new Date(start + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} \u2013 ${new Date(end + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`;
 
+    // Generate AI insight for this user
+    const ownExercises = db.prepare(`
+      SELECT e.name,
+        COUNT(CASE WHEN el.completed = 1 THEN 1 END) as days_done,
+        COUNT(*) as days_total,
+        SUM(CASE WHEN el.completed = 1 THEN COALESCE(el.actual_value, e.target_value, 0) ELSE 0 END) as total_value,
+        e.target_type, e.target_weight, e.weight_unit,
+        SUM(CASE WHEN el.completed = 1 THEN COALESCE(el.actual_value, e.target_value, 0) * COALESCE(el.actual_weight, e.target_weight, 0) ELSE 0 END) as total_volume
+      FROM exercise_logs el JOIN exercises e ON e.id = el.exercise_id
+      WHERE el.user_id = ? AND el.log_date >= ? AND el.log_date <= ?
+      GROUP BY e.name ORDER BY e.name
+    `).all(user.id, start, end) as Array<{ name: string; days_done: number; days_total: number; total_value: number; target_type: string; target_weight: number | null; weight_unit: string | null; total_volume: number }>;
+
+    const ownActivities = db.prepare(`
+      SELECT activity_type, COUNT(*) as count, SUM(duration_minutes) as total_mins
+      FROM activity_sessions WHERE user_id = ? AND session_date >= ? AND session_date <= ?
+      GROUP BY activity_type
+    `).all(user.id, start, end) as Array<{ activity_type: string; count: number; total_mins: number | null }>;
+
+    let aiInsightHtml = '';
+    if (ownExercises.length > 0 || ownActivities.length > 0) {
+      const insight = await generateWeeklyInsight({
+        userName: user.name,
+        weekLabel: weekFormatted,
+        exercises: ownExercises,
+        activities: ownActivities,
+      });
+      if (insight) {
+        // Cache it
+        try {
+          db.prepare('INSERT OR REPLACE INTO weekly_insights (user_id, week_start, insight) VALUES (?, ?, ?)').run(user.id, start, insight);
+        } catch { /* ignore */ }
+
+        aiInsightHtml = `
+          <div style="background: #f0f4ff; border-left: 4px solid #6C8EFF; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px;">
+            <p style="margin: 0 0 4px; font-size: 11px; color: #6C8EFF; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">AI Coach</p>
+            <p style="margin: 0; color: #333; font-size: 14px; line-height: 1.6;">${escapeHtml(insight)}</p>
+          </div>`;
+      }
+    }
+
     try {
       await resend.emails.send({
         from: FROM,
@@ -417,6 +459,7 @@ async function sendWeeklySummaries() {
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
             <h2 style="color: #1a1a1a; margin-bottom: 4px;">Weekly Summary</h2>
             <p style="color: #6b7280; margin-top: 0;">${weekFormatted}</p>
+            ${aiInsightHtml}
             ${userSections.join('<hr style="border: none; border-top: 1px solid #e5e7eb; margin: 16px 0;">')}
             ${goalsHtml}
             <a href="${APP_URL}/stats"
