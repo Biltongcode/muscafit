@@ -10,6 +10,6 @@ export const config = {
      * - /_next (Next.js internals)
      * - /favicon.ico, /icons, etc.
      */
-    '/((?!login|register|api/auth|api/connections/invite/[^/]+$|_next/static|_next/image|favicon.ico|avatars).*)',
+    '/((?!login|register|demo|api/auth|api/connections/invite/[^/]+$|_next/static|_next/image|favicon.ico|avatars).*)',
   ],
 };
