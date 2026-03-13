@@ -5,8 +5,11 @@ import { getConnectedUserIds, getVisibleUserIds, inPlaceholders } from './connec
 import { generateWeeklyInsight } from './ai';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM = process.env.NOTIFICATION_FROM || 'Muscafit <onboarding@resend.dev>';
-const APP_URL = process.env.NEXTAUTH_URL || 'https://train.biltongcodes.com';
+if (!process.env.NOTIFICATION_FROM) {
+  console.warn('[Muscafit] NOTIFICATION_FROM env var not set — email notifications will fail');
+}
+const FROM = process.env.NOTIFICATION_FROM || 'Muscafit <noreply@example.com>';
+const APP_URL = process.env.NEXTAUTH_URL || 'http://localhost:3010';
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -435,7 +438,7 @@ async function sendWeeklySummaries() {
     // Clear any stale cached insight for this week so we regenerate with complete data
     try {
       db.prepare('DELETE FROM weekly_insights WHERE user_id = ? AND week_start = ?').run(user.id, start);
-    } catch { /* ignore */ }
+    } catch (e: unknown) { console.warn('[Muscafit] Failed to clear stale insight:', e); }
 
     let aiInsightHtml = '';
     if (ownExercises.length > 0 || ownActivities.length > 0) {
@@ -450,7 +453,7 @@ async function sendWeeklySummaries() {
         // Cache it
         try {
           db.prepare('INSERT OR REPLACE INTO weekly_insights (user_id, week_start, insight) VALUES (?, ?, ?)').run(user.id, start, insight);
-        } catch { /* ignore */ }
+        } catch (e: unknown) { console.warn('[Muscafit] Failed to cache weekly insight:', e); }
 
         aiInsightHtml = `
           <div style="background: #f0f4ff; border-left: 4px solid #6C8EFF; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px;">

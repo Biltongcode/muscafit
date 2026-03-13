@@ -74,19 +74,26 @@ db.exec(`
   );
 `);
 
-// Seed users
-const password1 = bcrypt.hashSync('duncan123', 10);
-const password2 = bcrypt.hashSync('fred123', 10);
+// Seed users — override via environment variables or use defaults
+const USER1_NAME = process.env.SEED_USER1_NAME || 'User1';
+const USER1_EMAIL = process.env.SEED_USER1_EMAIL || 'user1@muscafit.local';
+const USER1_PASS = process.env.SEED_USER1_PASS || 'changeme123';
+const USER2_NAME = process.env.SEED_USER2_NAME || 'User2';
+const USER2_EMAIL = process.env.SEED_USER2_EMAIL || 'user2@muscafit.local';
+const USER2_PASS = process.env.SEED_USER2_PASS || 'changeme456';
+
+const password1 = bcrypt.hashSync(USER1_PASS, 10);
+const password2 = bcrypt.hashSync(USER2_PASS, 10);
 
 const insertUser = db.prepare(`
   INSERT OR IGNORE INTO users (name, email, password_hash) VALUES (?, ?, ?)
 `);
 
-insertUser.run('Duncan', 'duncan@muscafit.local', password1);
-insertUser.run('Fred', 'fred@muscafit.local', password2);
+insertUser.run(USER1_NAME, USER1_EMAIL, password1);
+insertUser.run(USER2_NAME, USER2_EMAIL, password2);
 
-// Get Duncan's user ID
-const duncan = db.prepare('SELECT id FROM users WHERE email = ?').get('duncan@muscafit.local') as { id: number };
+// Get first user's ID for exercise seeding
+const duncan = db.prepare('SELECT id FROM users WHERE email = ?').get(USER1_EMAIL) as { id: number };
 
 // Seed Duncan's exercises
 const insertExercise = db.prepare(`
@@ -104,19 +111,22 @@ if (existingCount.count === 0) {
   insertExercise.run(duncan.id, 'Scissor leg raises', 'reps', 80, null, null, null, 4);
   insertExercise.run(duncan.id, 'Ankle taps', 'reps', 80, null, null, null, 5);
   insertExercise.run(duncan.id, 'Side planks', 'timed_sets', 30, 3, 30, 'each side', 6);
-  console.log('Seeded 6 exercises for Duncan');
+  console.log(`Seeded 6 exercises for ${USER1_NAME}`);
 } else {
-  console.log(`Duncan already has ${existingCount.count} exercises, skipping`);
+  console.log(`${USER1_NAME} already has ${existingCount.count} exercises, skipping`);
 }
 
 console.log('Seed complete!');
 console.log('');
 console.log('Users:');
 const users = db.prepare('SELECT id, name, email FROM users').all();
-users.forEach((u: any) => console.log(`  ${u.id}: ${u.name} (${u.email})`));
+users.forEach((u: unknown) => {
+  const user = u as { id: number; name: string; email: string };
+  console.log(`  ${user.id}: ${user.name} (${user.email})`);
+});
 console.log('');
 console.log('Login credentials:');
-console.log('  Duncan: duncan@muscafit.local / duncan123');
-console.log('  Fred:   fred@muscafit.local / fred123');
+console.log(`  ${USER1_NAME}: ${USER1_EMAIL} / ${USER1_PASS}`);
+console.log(`  ${USER2_NAME}: ${USER2_EMAIL} / ${USER2_PASS}`);
 
 db.close();

@@ -136,13 +136,13 @@ db.exec(`
   );
 `);
 
-// Seed existing Duncan<->Fred connection (safe - UNIQUE constraint will prevent duplicates)
-try { db.exec("INSERT INTO user_connections (user_id, connected_user_id) VALUES (1, 2)"); } catch {}
-try { db.exec("INSERT INTO user_connections (user_id, connected_user_id) VALUES (2, 1)"); } catch {}
+// Seed existing user connection (safe - UNIQUE constraint will prevent duplicates)
+try { db.exec("INSERT INTO user_connections (user_id, connected_user_id) VALUES (1, 2)"); } catch { /* duplicate — expected */ }
+try { db.exec("INSERT INTO user_connections (user_id, connected_user_id) VALUES (2, 1)"); } catch { /* duplicate — expected */ }
 
 // Safe migration: add created_by_id to goals
-try { db.exec('ALTER TABLE goals ADD COLUMN created_by_id INTEGER REFERENCES users(id)'); } catch {}
-try { db.exec("UPDATE goals SET created_by_id = 1 WHERE scope = 'group' AND created_by_id IS NULL"); } catch {}
+try { db.exec('ALTER TABLE goals ADD COLUMN created_by_id INTEGER REFERENCES users(id)'); } catch { /* column exists */ }
+try { db.exec("UPDATE goals SET created_by_id = 1 WHERE scope = 'group' AND created_by_id IS NULL"); } catch { /* already set */ }
 
 // Safe migration: add weekly summary columns to user_settings if missing
 try {
@@ -157,20 +157,20 @@ try {
 }
 
 // Safe migration: add weight columns for weighted exercises
-try { db.exec(`ALTER TABLE exercises ADD COLUMN target_weight REAL`); } catch {}
-try { db.exec(`ALTER TABLE exercises ADD COLUMN weight_unit TEXT DEFAULT 'kg'`); } catch {}
-try { db.exec(`ALTER TABLE exercise_logs ADD COLUMN actual_weight REAL`); } catch {}
+try { db.exec(`ALTER TABLE exercises ADD COLUMN target_weight REAL`); } catch { /* column exists */ }
+try { db.exec(`ALTER TABLE exercises ADD COLUMN weight_unit TEXT DEFAULT 'kg'`); } catch { /* column exists */ }
+try { db.exec(`ALTER TABLE exercise_logs ADD COLUMN actual_weight REAL`); } catch { /* column exists */ }
 
 // Safe migration: add role column to users
-try { db.exec(`ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'`); } catch { /* column exists */ }
 // Auto-promote user id 1 to admin
-try { db.exec(`UPDATE users SET role = 'admin' WHERE id = 1 AND role = 'user'`); } catch {}
+try { db.exec(`UPDATE users SET role = 'admin' WHERE id = 1 AND role = 'user'`); } catch { /* already set */ }
 
 // Safe migration: add canonical_name for shared exercise catalogue
-try { db.exec(`ALTER TABLE exercises ADD COLUMN canonical_name TEXT`); } catch {}
+try { db.exec(`ALTER TABLE exercises ADD COLUMN canonical_name TEXT`); } catch { /* column exists */ }
 
 // Safe migration: add status column for planned activities
-try { db.exec(`ALTER TABLE activity_sessions ADD COLUMN status TEXT DEFAULT 'completed'`); } catch {}
+try { db.exec(`ALTER TABLE activity_sessions ADD COLUMN status TEXT DEFAULT 'completed'`); } catch { /* column exists */ }
 
 // AI insights cache
 db.exec(`

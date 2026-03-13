@@ -8,7 +8,7 @@ const newPassword = process.argv[3];
 
 if (!email || !newPassword) {
   console.log('Usage: npx tsx scripts/change-password.ts <email> <new-password>');
-  console.log('Example: npx tsx scripts/change-password.ts duncan@muscafit.local MyNewPass!456');
+  console.log('Example: npx tsx scripts/change-password.ts user@muscafit.local MyNewPass!456');
   process.exit(1);
 }
 
