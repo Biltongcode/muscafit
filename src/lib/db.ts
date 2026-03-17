@@ -177,6 +177,17 @@ try { db.exec(`ALTER TABLE exercises ADD COLUMN target_distance REAL`); } catch 
 try { db.exec(`ALTER TABLE exercises ADD COLUMN distance_unit TEXT DEFAULT 'm'`); } catch {}
 try { db.exec(`ALTER TABLE exercise_logs ADD COLUMN actual_distance REAL`); } catch {}
 
+// Fire reactions (emoji reactions on completed exercises)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS fire_reactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    log_id INTEGER NOT NULL REFERENCES exercise_logs(id),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, log_id)
+  );
+`);
+
 // AI insights cache
 db.exec(`
   CREATE TABLE IF NOT EXISTS weekly_insights (

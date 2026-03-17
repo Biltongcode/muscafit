@@ -23,11 +23,18 @@ const config: Config = {
           '50%': { transform: 'scale(1.2)' },
           '100%': { transform: 'scale(1)' },
         },
+        'fire-pop': {
+          '0%': { transform: 'scale(1)' },
+          '30%': { transform: 'scale(1.3)' },
+          '60%': { transform: 'scale(0.9)' },
+          '100%': { transform: 'scale(1)' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 0.3s ease-out',
         'scale-in': 'scale-in 0.2s ease-out',
         'check-pop': 'check-pop 0.2s ease-out',
+        'fire-pop': 'fire-pop 0.3s ease-out',
       },
       boxShadow: {
         'glow': '0 0 20px rgba(59, 130, 246, 0.15)',

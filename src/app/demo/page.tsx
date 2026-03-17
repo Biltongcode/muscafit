@@ -137,7 +137,17 @@ function DemoAvatar({ name, size = 'md' }: { name: string; size?: 'sm' | 'md' | 
   );
 }
 
-function DemoExerciseRow({ exercise }: { exercise: Exercise }) {
+// Fire reactions for demo — logId -> array of names who fired
+const demoFires: Record<number, string[]> = {
+  10: ['Alex Mitchell'],           // Sarah's Deadlifts — fired by Alex
+  11: ['Alex Mitchell', 'James O\'Brien'],  // Sarah's Swimming — fired by Alex and James
+  12: ['James O\'Brien'],          // Sarah's Kettlebell Swings — fired by James
+  1: ['Sarah Chen'],               // Alex's Push-ups — fired by Sarah
+  2: ['Sarah Chen', 'James O\'Brien'],  // Alex's Barbell Squats — fired by Sarah and James
+  20: ['Alex Mitchell'],           // James's Bench Press — fired by Alex
+};
+
+function DemoExerciseRow({ exercise, isOwn }: { exercise: Exercise; isOwn: boolean }) {
   const isWeighted = exercise.targetType === 'weighted';
   const isDistance = exercise.targetType === 'distance';
   return (
@@ -179,6 +189,25 @@ function DemoExerciseRow({ exercise }: { exercise: Exercise }) {
             )}
           </div>
         </div>
+
+        {/* Fire reaction display */}
+        {exercise.completed && (() => {
+          const fires = demoFires[exercise.logId] || [];
+          return fires.length > 0 || !isOwn ? (
+            <div className="flex items-center gap-0.5 flex-shrink-0">
+              {fires.length > 0 && (
+                <span className="text-xs font-medium text-orange-500 dark:text-orange-400 min-w-[1rem] text-center" title={fires.join(', ')}>
+                  {fires.length}
+                </span>
+              )}
+              {!isOwn && (
+                <span className={`p-2 rounded-xl ${fires.length > 0 ? '' : 'grayscale opacity-40'}`}>
+                  <span className="text-lg">🔥</span>
+                </span>
+              )}
+            </div>
+          ) : null;
+        })()}
       </div>
     </div>
   );
@@ -375,7 +404,7 @@ export default function DemoPage() {
                       {user.isRestDay ? 'Rest day' : 'No exercises configured'}
                     </div>
                   ) : (
-                    user.exercises.map(ex => <DemoExerciseRow key={ex.logId} exercise={ex} />)
+                    user.exercises.map(ex => <DemoExerciseRow key={ex.logId} exercise={ex} isOwn={isOwn} />)
                   )}
                 </div>
 

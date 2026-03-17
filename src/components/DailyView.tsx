@@ -60,6 +60,11 @@ interface Comment {
   authorAvatarUrl?: string | null;
 }
 
+interface FireReaction {
+  userId: number;
+  userName: string;
+}
+
 interface DailyViewProps {
   currentUserId: number;
   currentUserName: string;
@@ -126,23 +131,27 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
     existing: Activity | null;
   } | null>(null);
   const [showActivityPicker, setShowActivityPicker] = useState(false);
+  const [fireReactions, setFireReactions] = useState<Record<number, FireReaction[]>>({});
 
   const isToday = date === getTodayStr();
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [logsRes, activitiesRes, commentsRes] = await Promise.all([
+      const [logsRes, activitiesRes, commentsRes, reactionsRes] = await Promise.all([
         fetch(`/api/logs?date=${date}`),
         fetch(`/api/activities?date=${date}`),
         fetch(`/api/comments?date=${date}`),
+        fetch(`/api/reactions?date=${date}`),
       ]);
       const logsData = await logsRes.json();
       const activitiesData = await activitiesRes.json();
       const commentsData = await commentsRes.json();
+      const reactionsData = await reactionsRes.json();
       setUsers(logsData.users);
       setActivities(activitiesData.activities);
       setComments(commentsData.comments);
+      setFireReactions(reactionsData.reactions || {});
     } catch (err) {
       console.error('Failed to fetch data:', err);
     }
@@ -217,6 +226,33 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
       console.error('Failed to save details:', err);
     }
     setExpandedLog(null);
+  };
+
+  // --- Fire reaction handler ---
+
+  const toggleFire = async (logId: number) => {
+    // Optimistic update
+    setFireReactions((prev) => {
+      const existing = prev[logId] || [];
+      const alreadyFired = existing.some((r) => r.userId === currentUserId);
+      if (alreadyFired) {
+        const updated = existing.filter((r) => r.userId !== currentUserId);
+        return { ...prev, [logId]: updated };
+      } else {
+        return { ...prev, [logId]: [...existing, { userId: currentUserId, userName: currentUserName }] };
+      }
+    });
+
+    try {
+      await fetch('/api/reactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ logId }),
+      });
+    } catch {
+      // Revert on error
+      fetchData();
+    }
   };
 
   // --- Activity handlers ---
@@ -404,6 +440,9 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
                           onToggle={() => toggleExercise(user.id, ex.logId, ex.exerciseId, ex.completed)}
                           onExpand={() => setExpandedLog(expandedLog === ex.logId ? null : ex.logId)}
                           onSave={(val, sets, weight, notes, dist) => saveDetails(ex.logId, val, sets, weight, notes, dist)}
+                          fires={fireReactions[ex.logId] || []}
+                          currentUserId={currentUserId}
+                          onFire={() => toggleFire(ex.logId)}
                         />
                       ))
                     )}
@@ -782,9 +821,12 @@ interface ExerciseRowProps {
   onToggle: () => void;
   onExpand: () => void;
   onSave: (actualValue: number | null, actualSets: number | null, actualWeight: number | null, notes: string | null, actualDistance?: number | null) => void;
+  fires: FireReaction[];
+  currentUserId: number;
+  onFire: () => void;
 }
 
-function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave }: ExerciseRowProps) {
+function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave, fires, currentUserId, onFire }: ExerciseRowProps) {
   const [editValue, setEditValue] = useState<string>(exercise.actualValue?.toString() ?? '');
   const [editSets, setEditSets] = useState<string>(exercise.actualSets?.toString() ?? '');
   const [editWeight, setEditWeight] = useState<string>(exercise.actualWeight?.toString() ?? exercise.targetWeight?.toString() ?? '');
@@ -854,6 +896,34 @@ function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave }
             )}
           </div>
         </div>
+
+        {/* Fire reaction button + count */}
+        {exercise.completed && (
+          <div className="flex items-center gap-0.5 flex-shrink-0">
+            {fires.length > 0 && (
+              <span
+                className="text-xs font-medium text-orange-500 dark:text-orange-400 min-w-[1rem] text-center"
+                title={fires.map((f) => f.userName).join(', ')}
+              >
+                {fires.length}
+              </span>
+            )}
+            {!isOwn && (
+              <button
+                onClick={onFire}
+                className={`p-2 rounded-xl transition-all touch-target flex items-center justify-center ${
+                  fires.some((f) => f.userId === currentUserId)
+                    ? 'animate-fire-pop'
+                    : 'grayscale opacity-40 hover:grayscale-0 hover:opacity-100'
+                }`}
+                aria-label="Give fire"
+                title={fires.some((f) => f.userId === currentUserId) ? 'Remove fire' : 'Give fire'}
+              >
+                <span className="text-lg">🔥</span>
+              </button>
+            )}
+          </div>
+        )}
 
         {isOwn && (
           <button
