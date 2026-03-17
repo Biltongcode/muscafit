@@ -17,6 +17,8 @@ interface Exercise {
   schedule_days: string | null;
   target_weight: number | null;
   weight_unit: string | null;
+  target_distance: number | null;
+  distance_unit: string | null;
   canonical_name: string | null;
 }
 
@@ -31,6 +33,7 @@ const TARGET_TYPES = [
   { value: 'timed', label: 'Timed (seconds)' },
   { value: 'timed_sets', label: 'Timed Sets' },
   { value: 'weighted', label: 'Weighted (sets \u00d7 reps @ weight)' },
+  { value: 'distance', label: 'Distance (e.g. swim 400m, run 5km)' },
 ];
 
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -59,6 +62,10 @@ function formatTarget(ex: Exercise): string {
     }
     case 'weighted':
       return `${ex.target_sets}\u00d7${ex.target_per_set} @ ${ex.target_weight}${ex.weight_unit || 'kg'}`;
+    case 'distance': {
+      const unit = ex.distance_unit || 'm';
+      return `${ex.target_distance}${unit === 'm' ? 'm' : ' ' + unit}`;
+    }
     default:
       return '';
   }
@@ -75,10 +82,12 @@ interface EditFormData {
   scheduleDays: string;
   targetWeight: string;
   weightUnit: string;
+  targetDistance: string;
+  distanceUnit: string;
 }
 
 function emptyForm(): EditFormData {
-  return { name: '', canonicalName: null, targetType: 'reps', targetValue: '', targetSets: '', targetPerSet: '', notes: '', scheduleDays: '', targetWeight: '', weightUnit: 'kg' };
+  return { name: '', canonicalName: null, targetType: 'reps', targetValue: '', targetSets: '', targetPerSet: '', notes: '', scheduleDays: '', targetWeight: '', weightUnit: 'kg', targetDistance: '', distanceUnit: 'm' };
 }
 
 function exerciseToForm(ex: Exercise): EditFormData {
@@ -93,6 +102,8 @@ function exerciseToForm(ex: Exercise): EditFormData {
     scheduleDays: ex.schedule_days ?? '',
     targetWeight: ex.target_weight?.toString() ?? '',
     weightUnit: ex.weight_unit || 'kg',
+    targetDistance: ex.target_distance?.toString() ?? '',
+    distanceUnit: ex.distance_unit || 'm',
   };
 }
 
@@ -185,6 +196,8 @@ export default function ExerciseManager({ currentUserId, currentUserName }: Exer
           scheduleDays: ex.schedule_days,
           targetWeight: ex.target_weight,
           weightUnit: ex.weight_unit,
+          targetDistance: ex.target_distance,
+          distanceUnit: ex.distance_unit,
           canonicalName: ex.canonical_name,
         }),
       });
@@ -232,6 +245,7 @@ export default function ExerciseManager({ currentUserId, currentUserName }: Exer
 
   const showSets = form.targetType === 'reps_sets' || form.targetType === 'timed_sets' || form.targetType === 'weighted';
   const isWeighted = form.targetType === 'weighted';
+  const isDistance = form.targetType === 'distance';
 
   const saveExercise = async () => {
     if (!form.name.trim()) return;
@@ -240,6 +254,7 @@ export default function ExerciseManager({ currentUserId, currentUserName }: Exer
     // For weighted type, auto-compute targetValue as sets * reps_per_set
     const computedTargetValue = isWeighted
       ? (form.targetSets && form.targetPerSet ? Number(form.targetSets) * Number(form.targetPerSet) : null)
+      : isDistance ? null
       : (form.targetValue ? Number(form.targetValue) : null);
 
     const payload = {
@@ -253,6 +268,8 @@ export default function ExerciseManager({ currentUserId, currentUserName }: Exer
       scheduleDays: form.scheduleDays || null,
       targetWeight: isWeighted && form.targetWeight ? Number(form.targetWeight) : null,
       weightUnit: isWeighted ? form.weightUnit : null,
+      targetDistance: isDistance && form.targetDistance ? Number(form.targetDistance) : null,
+      distanceUnit: isDistance ? form.distanceUnit : null,
     };
 
     try {
@@ -594,7 +611,7 @@ function ExerciseForm({
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3">
-          {form.targetType !== 'weighted' && (
+          {form.targetType !== 'weighted' && form.targetType !== 'distance' && (
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                 {form.targetType.startsWith('timed') ? 'Seconds' : 'Total Reps'}
@@ -675,6 +692,41 @@ function ExerciseForm({
                 >
                   lbs
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {form.targetType === 'distance' && (
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Distance</label>
+              <input
+                type="number"
+                step="any"
+                value={form.targetDistance}
+                onChange={(e) => setForm({ ...form, targetDistance: e.target.value })}
+                placeholder={form.distanceUnit === 'm' ? 'e.g. 400' : 'e.g. 5'}
+                className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:placeholder-slate-500"
+              />
+            </div>
+            <div className="w-28">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Unit</label>
+              <div className="flex rounded-lg border border-gray-200 dark:border-slate-600 overflow-hidden">
+                {(['m', 'km', 'miles'] as const).map((unit) => (
+                  <button
+                    key={unit}
+                    type="button"
+                    onClick={() => setForm({ ...form, distanceUnit: unit })}
+                    className={`flex-1 py-2.5 text-xs font-medium transition-colors ${
+                      form.distanceUnit === unit
+                        ? 'gradient-btn'
+                        : 'bg-white dark:bg-slate-700/50 text-gray-500 dark:text-slate-400'
+                    }`}
+                  >
+                    {unit}
+                  </button>
+                ))}
               </div>
             </div>
           </div>

@@ -19,10 +19,13 @@ interface Exercise {
   exerciseNotes: string | null;
   targetWeight: number | null;
   weightUnit: string | null;
+  targetDistance: number | null;
+  distanceUnit: string | null;
   completed: boolean;
   actualValue: number | null;
   actualSets: number | null;
   actualWeight: number | null;
+  actualDistance: number | null;
   logNotes: string | null;
   completedAt: string | null;
 }
@@ -79,6 +82,10 @@ function formatTarget(ex: Exercise): string {
     }
     case 'weighted':
       return `${ex.targetSets}\u00d7${ex.targetPerSet} @ ${ex.targetWeight}${ex.weightUnit || 'kg'}`;
+    case 'distance': {
+      const unit = ex.distanceUnit || 'm';
+      return `${ex.targetDistance}${unit === 'm' ? 'm' : ' ' + unit}`;
+    }
     default:
       return '';
   }
@@ -189,12 +196,12 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
     }
   };
 
-  const saveDetails = async (logId: number, actualValue: number | null, actualSets: number | null, actualWeight: number | null, notes: string | null) => {
+  const saveDetails = async (logId: number, actualValue: number | null, actualSets: number | null, actualWeight: number | null, notes: string | null, actualDistance?: number | null) => {
     try {
       await fetch(`/api/logs/${logId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ actualValue, actualSets, actualWeight, notes }),
+        body: JSON.stringify({ actualValue, actualSets, actualWeight, actualDistance, notes }),
       });
 
       setUsers((prev) =>
@@ -202,7 +209,7 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
           ...u,
           exercises: u.exercises.map((e) => {
             if (e.logId !== logId) return e;
-            return { ...e, actualValue, actualSets, actualWeight, logNotes: notes };
+            return { ...e, actualValue, actualSets, actualWeight, actualDistance: actualDistance ?? e.actualDistance, logNotes: notes };
           }),
         }))
       );
@@ -396,7 +403,7 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
                           isExpanded={expandedLog === ex.logId}
                           onToggle={() => toggleExercise(user.id, ex.logId, ex.exerciseId, ex.completed)}
                           onExpand={() => setExpandedLog(expandedLog === ex.logId ? null : ex.logId)}
-                          onSave={(val, sets, weight, notes) => saveDetails(ex.logId, val, sets, weight, notes)}
+                          onSave={(val, sets, weight, notes, dist) => saveDetails(ex.logId, val, sets, weight, notes, dist)}
                         />
                       ))
                     )}
@@ -774,13 +781,14 @@ interface ExerciseRowProps {
   isExpanded: boolean;
   onToggle: () => void;
   onExpand: () => void;
-  onSave: (actualValue: number | null, actualSets: number | null, actualWeight: number | null, notes: string | null) => void;
+  onSave: (actualValue: number | null, actualSets: number | null, actualWeight: number | null, notes: string | null, actualDistance?: number | null) => void;
 }
 
 function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave }: ExerciseRowProps) {
   const [editValue, setEditValue] = useState<string>(exercise.actualValue?.toString() ?? '');
   const [editSets, setEditSets] = useState<string>(exercise.actualSets?.toString() ?? '');
   const [editWeight, setEditWeight] = useState<string>(exercise.actualWeight?.toString() ?? exercise.targetWeight?.toString() ?? '');
+  const [editDistance, setEditDistance] = useState<string>(exercise.actualDistance?.toString() ?? exercise.targetDistance?.toString() ?? '');
   const [editNotes, setEditNotes] = useState<string>(exercise.logNotes ?? '');
   const [justChecked, setJustChecked] = useState(false);
 
@@ -788,11 +796,13 @@ function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave }
     setEditValue(exercise.actualValue?.toString() ?? '');
     setEditSets(exercise.actualSets?.toString() ?? '');
     setEditWeight(exercise.actualWeight?.toString() ?? exercise.targetWeight?.toString() ?? '');
+    setEditDistance(exercise.actualDistance?.toString() ?? exercise.targetDistance?.toString() ?? '');
     setEditNotes(exercise.logNotes ?? '');
-  }, [exercise.actualValue, exercise.actualSets, exercise.actualWeight, exercise.targetWeight, exercise.logNotes]);
+  }, [exercise.actualValue, exercise.actualSets, exercise.actualWeight, exercise.targetWeight, exercise.actualDistance, exercise.targetDistance, exercise.logNotes]);
 
   const hasSets = exercise.targetType === 'reps_sets' || exercise.targetType === 'timed_sets' || exercise.targetType === 'weighted';
   const isWeighted = exercise.targetType === 'weighted';
+  const isDistanceType = exercise.targetType === 'distance';
 
   const handleToggle = () => {
     if (!exercise.completed) {
@@ -837,6 +847,11 @@ function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave }
                 {isWeighted && exercise.actualWeight != null ? ` @ ${exercise.actualWeight}${exercise.weightUnit || 'kg'}` : ''})
               </span>
             )}
+            {isDistanceType && exercise.actualDistance != null && (
+              <span className="ml-1 text-blue-600 dark:text-blue-400">
+                (did: {exercise.actualDistance}{exercise.distanceUnit === 'm' ? 'm' : ' ' + (exercise.distanceUnit || 'm')})
+              </span>
+            )}
           </div>
         </div>
 
@@ -861,18 +876,34 @@ function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave }
         <div className="px-4 pb-3 pt-1 bg-gray-50 dark:bg-slate-800/40 border-t border-gray-100 dark:border-slate-700/50">
           <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end">
             <div className="flex gap-3">
-              <div className="flex-1 sm:flex-none">
-                <label className="block text-xs text-gray-500 dark:text-slate-400 mb-1">
-                  {exercise.targetType.startsWith('timed') ? 'Seconds' : 'Reps'}
-                </label>
-                <input
-                  type="number"
-                  value={editValue}
-                  onChange={(e) => setEditValue(e.target.value)}
-                  placeholder={exercise.targetValue?.toString() ?? ''}
-                  className="w-full sm:w-20 px-3 py-2.5 text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+              {isDistanceType ? (
+                <div className="flex-1 sm:flex-none">
+                  <label className="block text-xs text-gray-500 dark:text-slate-400 mb-1">
+                    Distance ({exercise.distanceUnit || 'm'})
+                  </label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={editDistance}
+                    onChange={(e) => setEditDistance(e.target.value)}
+                    placeholder={exercise.targetDistance?.toString() ?? ''}
+                    className="w-full sm:w-24 px-3 py-2.5 text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              ) : (
+                <div className="flex-1 sm:flex-none">
+                  <label className="block text-xs text-gray-500 dark:text-slate-400 mb-1">
+                    {exercise.targetType.startsWith('timed') ? 'Seconds' : 'Reps'}
+                  </label>
+                  <input
+                    type="number"
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    placeholder={exercise.targetValue?.toString() ?? ''}
+                    className="w-full sm:w-20 px-3 py-2.5 text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              )}
 
               {hasSets && (
                 <div className="flex-1 sm:flex-none">
@@ -921,7 +952,8 @@ function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave }
                   editValue ? Number(editValue) : null,
                   editSets ? Number(editSets) : null,
                   isWeighted && editWeight ? Number(editWeight) : null,
-                  editNotes || null
+                  editNotes || null,
+                  isDistanceType && editDistance ? Number(editDistance) : null
                 )
               }
               className="px-4 py-2.5 text-sm gradient-btn rounded-lg sm:flex-shrink-0"

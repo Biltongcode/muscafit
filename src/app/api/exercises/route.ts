@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
 
     const exercises = db
       .prepare(
-        `SELECT id, name, target_type, target_value, target_sets, target_per_set, notes, sort_order, is_active, schedule_days, target_weight, weight_unit, canonical_name
+        `SELECT id, name, target_type, target_value, target_sets, target_per_set, notes, sort_order, is_active, schedule_days, target_weight, weight_unit, target_distance, distance_unit, canonical_name
          FROM exercises WHERE user_id = ? AND is_active = 1 ORDER BY sort_order`
       )
       .all(Number(browseUserId));
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
 
   const exercises = db
     .prepare(
-      `SELECT id, name, target_type, target_value, target_sets, target_per_set, notes, sort_order, is_active, schedule_days, target_weight, weight_unit, canonical_name
+      `SELECT id, name, target_type, target_value, target_sets, target_per_set, notes, sort_order, is_active, schedule_days, target_weight, weight_unit, target_distance, distance_unit, canonical_name
        FROM exercises WHERE user_id = ? ${includeInactive ? '' : 'AND is_active = 1'} ORDER BY sort_order`
     )
     .all(Number(session.user.id));
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { name, targetType, targetValue, targetSets, targetPerSet, notes, scheduleDays, targetWeight, weightUnit, canonicalName } = body;
+  const { name, targetType, targetValue, targetSets, targetPerSet, notes, scheduleDays, targetWeight, weightUnit, targetDistance, distanceUnit, canonicalName } = body;
 
   if (!name || !targetType) {
     return NextResponse.json({ error: 'Name and targetType are required' }, { status: 400 });
@@ -64,10 +64,10 @@ export async function POST(req: NextRequest) {
 
   const result = db
     .prepare(
-      `INSERT INTO exercises (user_id, name, target_type, target_value, target_sets, target_per_set, notes, sort_order, schedule_days, target_weight, weight_unit, canonical_name)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO exercises (user_id, name, target_type, target_value, target_sets, target_per_set, notes, sort_order, schedule_days, target_weight, weight_unit, target_distance, distance_unit, canonical_name)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
-    .run(userId, name, targetType, targetValue ?? null, targetSets ?? null, targetPerSet ?? null, notes ?? null, maxOrder.max_order + 1, scheduleDays ?? null, targetWeight ?? null, weightUnit ?? 'kg', canonicalName ?? null);
+    .run(userId, name, targetType, targetValue ?? null, targetSets ?? null, targetPerSet ?? null, notes ?? null, maxOrder.max_order + 1, scheduleDays ?? null, targetWeight ?? null, weightUnit ?? 'kg', targetDistance ?? null, distanceUnit ?? 'm', canonicalName ?? null);
 
   return NextResponse.json({ id: result.lastInsertRowid }, { status: 201 });
 }

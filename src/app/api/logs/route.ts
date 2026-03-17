@@ -61,10 +61,13 @@ export async function GET(req: NextRequest) {
        e.sort_order,
        e.target_weight,
        e.weight_unit,
+       e.target_distance,
+       e.distance_unit,
        el.completed,
        el.actual_value,
        el.actual_sets,
        el.actual_weight,
+       el.actual_distance,
        el.notes as log_notes,
        el.completed_at
      FROM exercise_logs el
@@ -87,10 +90,13 @@ export async function GET(req: NextRequest) {
     sort_order: number;
     target_weight: number | null;
     weight_unit: string | null;
+    target_distance: number | null;
+    distance_unit: string | null;
     completed: number;
     actual_value: number | null;
     actual_sets: number | null;
     actual_weight: number | null;
+    actual_distance: number | null;
     log_notes: string | null;
     completed_at: string | null;
   }>;
@@ -122,10 +128,13 @@ export async function GET(req: NextRequest) {
           exerciseNotes: log.exercise_notes,
           targetWeight: log.target_weight,
           weightUnit: log.weight_unit,
+          targetDistance: log.target_distance,
+          distanceUnit: log.distance_unit,
           completed: log.completed === 1,
           actualValue: log.actual_value,
           actualSets: log.actual_sets,
           actualWeight: log.actual_weight,
+          actualDistance: log.actual_distance,
           logNotes: log.log_notes,
           completedAt: log.completed_at,
         })),
@@ -142,7 +151,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { exerciseId, date, completed, actualValue, actualSets, actualWeight, notes } = body;
+  const { exerciseId, date, completed, actualValue, actualSets, actualWeight, actualDistance, notes } = body;
 
   if (!exerciseId || !date) {
     return NextResponse.json({ error: 'exerciseId and date required' }, { status: 400 });
@@ -163,21 +172,22 @@ export async function POST(req: NextRequest) {
 
   // Upsert
   db.prepare(
-    `INSERT INTO exercise_logs (user_id, exercise_id, log_date, completed, actual_value, actual_sets, actual_weight, notes, completed_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO exercise_logs (user_id, exercise_id, log_date, completed, actual_value, actual_sets, actual_weight, actual_distance, notes, completed_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(user_id, exercise_id, log_date)
      DO UPDATE SET
        completed = excluded.completed,
        actual_value = COALESCE(excluded.actual_value, actual_value),
        actual_sets = COALESCE(excluded.actual_sets, actual_sets),
        actual_weight = COALESCE(excluded.actual_weight, actual_weight),
+       actual_distance = COALESCE(excluded.actual_distance, actual_distance),
        notes = COALESCE(excluded.notes, notes),
        completed_at = excluded.completed_at`
-  ).run(userId, exerciseId, date, completed ? 1 : 0, actualValue ?? null, actualSets ?? null, actualWeight ?? null, notes ?? null, completedAt);
+  ).run(userId, exerciseId, date, completed ? 1 : 0, actualValue ?? null, actualSets ?? null, actualWeight ?? null, actualDistance ?? null, notes ?? null, completedAt);
 
   // Return the updated log
   const log = db
-    .prepare('SELECT id, completed, actual_value, actual_sets, actual_weight, notes, completed_at FROM exercise_logs WHERE user_id = ? AND exercise_id = ? AND log_date = ?')
+    .prepare('SELECT id, completed, actual_value, actual_sets, actual_weight, actual_distance, notes, completed_at FROM exercise_logs WHERE user_id = ? AND exercise_id = ? AND log_date = ?')
     .get(userId, exerciseId, date);
 
   return NextResponse.json({ log });

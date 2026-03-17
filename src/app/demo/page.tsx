@@ -14,10 +14,13 @@ interface Exercise {
   exerciseNotes: string | null;
   targetWeight: number | null;
   weightUnit: string | null;
+  targetDistance: number | null;
+  distanceUnit: string | null;
   completed: boolean;
   actualValue: number | null;
   actualSets: number | null;
   actualWeight: number | null;
+  actualDistance: number | null;
 }
 
 interface Activity {
@@ -41,11 +44,11 @@ const users: DemoUser[] = [
   {
     name: 'Alex Mitchell',
     exercises: [
-      { logId: 1, name: 'Push-ups', targetType: 'reps_sets', targetValue: 60, targetSets: 3, targetPerSet: 20, exerciseNotes: null, targetWeight: null, weightUnit: null, completed: true, actualValue: 65, actualSets: 3, actualWeight: null },
-      { logId: 2, name: 'Barbell Squats', targetType: 'weighted', targetValue: null, targetSets: 4, targetPerSet: 8, exerciseNotes: null, targetWeight: 80, weightUnit: 'kg', completed: true, actualValue: null, actualSets: 4, actualWeight: 85 },
-      { logId: 3, name: 'Plank', targetType: 'timed', targetValue: 90, targetSets: null, targetPerSet: null, exerciseNotes: null, targetWeight: null, weightUnit: null, completed: true, actualValue: 95, actualSets: null, actualWeight: null },
-      { logId: 4, name: 'Pull-ups', targetType: 'reps_sets', targetValue: 24, targetSets: 3, targetPerSet: 8, exerciseNotes: null, targetWeight: null, weightUnit: null, completed: false, actualValue: null, actualSets: null, actualWeight: null },
-      { logId: 5, name: 'Dumbbell Lunges', targetType: 'weighted', targetValue: null, targetSets: 3, targetPerSet: 12, exerciseNotes: null, targetWeight: 20, weightUnit: 'kg', completed: false, actualValue: null, actualSets: null, actualWeight: null },
+      { logId: 1, name: 'Push-ups', targetType: 'reps_sets', targetValue: 60, targetSets: 3, targetPerSet: 20, exerciseNotes: null, targetWeight: null, weightUnit: null, targetDistance: null, distanceUnit: null, completed: true, actualValue: 65, actualSets: 3, actualWeight: null, actualDistance: null },
+      { logId: 2, name: 'Barbell Squats', targetType: 'weighted', targetValue: null, targetSets: 4, targetPerSet: 8, exerciseNotes: null, targetWeight: 80, weightUnit: 'kg', targetDistance: null, distanceUnit: null, completed: true, actualValue: null, actualSets: 4, actualWeight: 85, actualDistance: null },
+      { logId: 3, name: 'Plank', targetType: 'timed', targetValue: 90, targetSets: null, targetPerSet: null, exerciseNotes: null, targetWeight: null, weightUnit: null, targetDistance: null, distanceUnit: null, completed: true, actualValue: 95, actualSets: null, actualWeight: null, actualDistance: null },
+      { logId: 4, name: 'Pull-ups', targetType: 'reps_sets', targetValue: 24, targetSets: 3, targetPerSet: 8, exerciseNotes: null, targetWeight: null, weightUnit: null, targetDistance: null, distanceUnit: null, completed: false, actualValue: null, actualSets: null, actualWeight: null, actualDistance: null },
+      { logId: 5, name: 'Dumbbell Lunges', targetType: 'weighted', targetValue: null, targetSets: 3, targetPerSet: 12, exerciseNotes: null, targetWeight: 20, weightUnit: 'kg', targetDistance: null, distanceUnit: null, completed: false, actualValue: null, actualSets: null, actualWeight: null, actualDistance: null },
     ],
     activities: [
       { id: 1, activityType: 'run', durationMinutes: 35, distanceKm: 5.2, notes: 'Morning interval session', status: 'completed' },
@@ -58,10 +61,10 @@ const users: DemoUser[] = [
   {
     name: 'Sarah Chen',
     exercises: [
-      { logId: 10, name: 'Deadlifts', targetType: 'weighted', targetValue: null, targetSets: 4, targetPerSet: 6, exerciseNotes: null, targetWeight: 70, weightUnit: 'kg', completed: true, actualValue: null, actualSets: 4, actualWeight: 75 },
-      { logId: 11, name: 'Box Jumps', targetType: 'reps_sets', targetValue: 30, targetSets: 3, targetPerSet: 10, exerciseNotes: null, targetWeight: null, weightUnit: null, completed: true, actualValue: 30, actualSets: 3, actualWeight: null },
-      { logId: 12, name: 'Kettlebell Swings', targetType: 'reps_sets', targetValue: 45, targetSets: 3, targetPerSet: 15, exerciseNotes: null, targetWeight: null, weightUnit: null, completed: true, actualValue: 50, actualSets: 3, actualWeight: null },
-      { logId: 13, name: 'Burpees', targetType: 'reps', targetValue: 20, targetSets: null, targetPerSet: null, exerciseNotes: null, targetWeight: null, weightUnit: null, completed: true, actualValue: 25, actualSets: null, actualWeight: null },
+      { logId: 10, name: 'Deadlifts', targetType: 'weighted', targetValue: null, targetSets: 4, targetPerSet: 6, exerciseNotes: null, targetWeight: 70, weightUnit: 'kg', targetDistance: null, distanceUnit: null, completed: true, actualValue: null, actualSets: 4, actualWeight: 75, actualDistance: null },
+      { logId: 11, name: 'Swimming', targetType: 'distance', targetValue: null, targetSets: null, targetPerSet: null, exerciseNotes: null, targetWeight: null, weightUnit: null, targetDistance: 800, distanceUnit: 'm', completed: true, actualValue: null, actualSets: null, actualWeight: null, actualDistance: 800 },
+      { logId: 12, name: 'Kettlebell Swings', targetType: 'reps_sets', targetValue: 45, targetSets: 3, targetPerSet: 15, exerciseNotes: null, targetWeight: null, weightUnit: null, targetDistance: null, distanceUnit: null, completed: true, actualValue: 50, actualSets: 3, actualWeight: null, actualDistance: null },
+      { logId: 13, name: 'Burpees', targetType: 'reps', targetValue: 20, targetSets: null, targetPerSet: null, exerciseNotes: null, targetWeight: null, weightUnit: null, targetDistance: null, distanceUnit: null, completed: true, actualValue: 25, actualSets: null, actualWeight: null, actualDistance: null },
     ],
     activities: [
       { id: 3, activityType: 'gym', durationMinutes: 55, distanceKm: null, notes: 'Leg day', status: 'completed' },
@@ -74,9 +77,9 @@ const users: DemoUser[] = [
   {
     name: 'James O\'Brien',
     exercises: [
-      { logId: 20, name: 'Bench Press', targetType: 'weighted', targetValue: null, targetSets: 4, targetPerSet: 8, exerciseNotes: null, targetWeight: 65, weightUnit: 'kg', completed: true, actualValue: null, actualSets: 4, actualWeight: 65 },
-      { logId: 21, name: 'Incline Dumbbell Press', targetType: 'weighted', targetValue: null, targetSets: 3, targetPerSet: 10, exerciseNotes: null, targetWeight: 22, weightUnit: 'kg', completed: true, actualValue: null, actualSets: 3, actualWeight: 22 },
-      { logId: 22, name: 'Tricep Dips', targetType: 'reps_sets', targetValue: 36, targetSets: 3, targetPerSet: 12, exerciseNotes: null, targetWeight: null, weightUnit: null, completed: false, actualValue: null, actualSets: null, actualWeight: null },
+      { logId: 20, name: 'Bench Press', targetType: 'weighted', targetValue: null, targetSets: 4, targetPerSet: 8, exerciseNotes: null, targetWeight: 65, weightUnit: 'kg', targetDistance: null, distanceUnit: null, completed: true, actualValue: null, actualSets: 4, actualWeight: 65, actualDistance: null },
+      { logId: 21, name: 'Running', targetType: 'distance', targetValue: null, targetSets: null, targetPerSet: null, exerciseNotes: null, targetWeight: null, weightUnit: null, targetDistance: 5, distanceUnit: 'km', completed: true, actualValue: null, actualSets: null, actualWeight: null, actualDistance: 5.2 },
+      { logId: 22, name: 'Tricep Dips', targetType: 'reps_sets', targetValue: 36, targetSets: 3, targetPerSet: 12, exerciseNotes: null, targetWeight: null, weightUnit: null, targetDistance: null, distanceUnit: null, completed: false, actualValue: null, actualSets: null, actualWeight: null, actualDistance: null },
     ],
     activities: [
       { id: 4, activityType: 'squash', durationMinutes: 45, distanceKm: null, notes: null, status: 'completed' },
@@ -113,6 +116,10 @@ function formatTarget(ex: Exercise): string {
     }
     case 'weighted':
       return `${ex.targetSets}\u00d7${ex.targetPerSet} @ ${ex.targetWeight}${ex.weightUnit || 'kg'}`;
+    case 'distance': {
+      const unit = ex.distanceUnit || 'm';
+      return `${ex.targetDistance}${unit === 'm' ? 'm' : ' ' + unit}`;
+    }
     default:
       return '';
   }
@@ -132,6 +139,7 @@ function DemoAvatar({ name, size = 'md' }: { name: string; size?: 'sm' | 'md' | 
 
 function DemoExerciseRow({ exercise }: { exercise: Exercise }) {
   const isWeighted = exercise.targetType === 'weighted';
+  const isDistance = exercise.targetType === 'distance';
   return (
     <div className={`transition-colors ${exercise.completed ? 'bg-green-50/80 dark:bg-green-500/5' : ''}`}>
       <div className="px-4 py-3 flex items-center gap-3">
@@ -162,6 +170,11 @@ function DemoExerciseRow({ exercise }: { exercise: Exercise }) {
             {exercise.actualValue == null && isWeighted && exercise.actualWeight != null && exercise.completed && (
               <span className="ml-1 text-blue-600 dark:text-blue-400">
                 (did: {exercise.actualSets} sets @ {exercise.actualWeight}{exercise.weightUnit || 'kg'})
+              </span>
+            )}
+            {isDistance && exercise.actualDistance != null && (
+              <span className="ml-1 text-blue-600 dark:text-blue-400">
+                (did: {exercise.actualDistance}{exercise.distanceUnit === 'm' ? 'm' : ' ' + (exercise.distanceUnit || 'm')})
               </span>
             )}
           </div>

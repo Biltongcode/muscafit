@@ -22,7 +22,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 
   const body = await req.json();
-  const { completed, actualValue, actualSets, actualWeight, notes } = body;
+  const { completed, actualValue, actualSets, actualWeight, actualDistance, notes } = body;
 
   const completedAt = completed !== undefined
     ? (completed ? new Date().toISOString() : null)
@@ -34,6 +34,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
        actual_value = COALESCE(?, actual_value),
        actual_sets = COALESCE(?, actual_sets),
        actual_weight = COALESCE(?, actual_weight),
+       actual_distance = COALESCE(?, actual_distance),
        notes = COALESCE(?, notes),
        completed_at = CASE WHEN ? IS NOT NULL THEN ? ELSE completed_at END
      WHERE id = ? AND user_id = ?`
@@ -42,6 +43,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     actualValue ?? null,
     actualSets ?? null,
     actualWeight ?? null,
+    actualDistance ?? null,
     notes ?? null,
     completedAt !== undefined ? 'set' : null,
     completedAt ?? null,
@@ -50,7 +52,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   );
 
   const updated = db
-    .prepare('SELECT id, completed, actual_value, actual_sets, actual_weight, notes, completed_at FROM exercise_logs WHERE id = ?')
+    .prepare('SELECT id, completed, actual_value, actual_sets, actual_weight, actual_distance, notes, completed_at FROM exercise_logs WHERE id = ?')
     .get(logId);
 
   return NextResponse.json({ log: updated });

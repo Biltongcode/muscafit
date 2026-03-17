@@ -80,6 +80,22 @@ export const EXERCISE_CATALOGUE: CatalogueExercise[] = [
   { name: 'Step Ups', category: 'Lower Body', defaultTargetType: 'reps' },
   { name: 'Box Squats', category: 'Lower Body', defaultTargetType: 'weighted' },
 
+  // Swimming
+  { name: 'Swimming', category: 'Swimming', defaultTargetType: 'distance' },
+  { name: 'Freestyle Swim', category: 'Swimming', defaultTargetType: 'distance' },
+  { name: 'Backstroke', category: 'Swimming', defaultTargetType: 'distance' },
+  { name: 'Breaststroke', category: 'Swimming', defaultTargetType: 'distance' },
+  { name: 'Butterfly', category: 'Swimming', defaultTargetType: 'distance' },
+  { name: 'Mixed Swim', category: 'Swimming', defaultTargetType: 'distance' },
+
+  // Running
+  { name: 'Running', category: 'Running', defaultTargetType: 'distance' },
+  { name: 'Interval Run', category: 'Running', defaultTargetType: 'distance' },
+  { name: 'Tempo Run', category: 'Running', defaultTargetType: 'distance' },
+  { name: 'Long Run', category: 'Running', defaultTargetType: 'distance' },
+  { name: 'Sprint Intervals', category: 'Running', defaultTargetType: 'distance' },
+  { name: 'Hill Sprints', category: 'Running', defaultTargetType: 'distance' },
+
   // Cardio / Full Body
   { name: 'Burpees', category: 'Cardio', defaultTargetType: 'reps' },
   { name: 'Jumping Jacks', category: 'Cardio', defaultTargetType: 'reps' },
@@ -103,6 +119,8 @@ export const CATALOGUE_CATEGORIES = [
   'Upper Body',
   'Core',
   'Lower Body',
+  'Swimming',
+  'Running',
   'Cardio',
   'Flexibility',
 ];

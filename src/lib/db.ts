@@ -172,6 +172,11 @@ try { db.exec(`ALTER TABLE exercises ADD COLUMN canonical_name TEXT`); } catch {
 // Safe migration: add status column for planned activities
 try { db.exec(`ALTER TABLE activity_sessions ADD COLUMN status TEXT DEFAULT 'completed'`); } catch { /* column exists */ }
 
+// Safe migration: add distance columns for distance-based exercises
+try { db.exec(`ALTER TABLE exercises ADD COLUMN target_distance REAL`); } catch {}
+try { db.exec(`ALTER TABLE exercises ADD COLUMN distance_unit TEXT DEFAULT 'm'`); } catch {}
+try { db.exec(`ALTER TABLE exercise_logs ADD COLUMN actual_distance REAL`); } catch {}
+
 // AI insights cache
 db.exec(`
   CREATE TABLE IF NOT EXISTS weekly_insights (
