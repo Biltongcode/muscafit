@@ -138,7 +138,7 @@ export default function WeeklyView({ currentUserId, currentUserName }: WeeklyVie
 
   const goToDay = (dateStr: string) => {
     // Navigate to daily view — pass date as query param
-    router.push(`/?date=${dateStr}`);
+    router.push(`/daily?date=${dateStr}`);
   };
 
   const isCurrentWeek =
