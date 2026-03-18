@@ -42,7 +42,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         const user = db
-          .prepare('SELECT id, name, email, password_hash, role FROM users WHERE email = ?')
+          .prepare('SELECT id, name, email, password_hash, role FROM users WHERE LOWER(email) = ?')
           .get(emailNorm) as
           | { id: number; name: string; email: string; password_hash: string; role: string }
           | undefined;
