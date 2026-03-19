@@ -92,13 +92,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'You can only challenge connections' }, { status: 400 });
   }
 
-  // Check once-per-week limit
+  // Check once-per-week-per-user limit
   const weekKey = getWeekKey(challengeDate);
   const existingThisWeek = db.prepare(
-    'SELECT id FROM challenges WHERE challenger_id = ? AND week_key = ?'
-  ).get(userId, weekKey);
+    'SELECT id FROM challenges WHERE challenger_id = ? AND challenged_id = ? AND week_key = ?'
+  ).get(userId, challengedId, weekKey);
   if (existingThisWeek) {
-    return NextResponse.json({ error: 'You can only send one challenge per week' }, { status: 400 });
+    return NextResponse.json({ error: `You've already challenged this user this week` }, { status: 400 });
   }
 
   // Validate date is today or future (within 7 days)
