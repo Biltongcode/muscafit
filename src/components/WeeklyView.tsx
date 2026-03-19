@@ -170,7 +170,7 @@ export default function WeeklyView({ currentUserId, currentUserName }: WeeklyVie
           <div className="text-center">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{formatWeekRange(monday)}</h2>
             {isCurrentWeek && (
-              <span className="text-xs font-medium text-blue-600 dark:text-blue-400">This week</span>
+              <span className="text-xs font-medium text-cyan-600 dark:text-cyan-400">This week</span>
             )}
           </div>
           <button
@@ -185,7 +185,7 @@ export default function WeeklyView({ currentUserId, currentUserName }: WeeklyVie
           {!isCurrentWeek && (
             <button
               onClick={() => setMonday(getMonday(new Date()))}
-              className="ml-2 px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 rounded-full hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors"
+              className="ml-2 px-3 py-1.5 text-xs font-medium text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-500/10 rounded-full hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors"
             >
               This week
             </button>
@@ -225,7 +225,7 @@ export default function WeeklyView({ currentUserId, currentUserName }: WeeklyVie
             {sortedUsers.map((user) => {
               const isOwn = user.id === currentUserId;
               return (
-                <div key={user.id} className="glass rounded-xl shadow-sm dark:shadow-glow/5 overflow-hidden animate-fade-in">
+                <div key={user.id} className="glass gradient-border rounded-xl shadow-card dark:shadow-glow/5 overflow-hidden animate-fade-in">
                   {/* User header */}
                   <div className="px-4 py-2.5 border-b border-gray-100 dark:border-slate-700/50 bg-gray-50/80 dark:bg-slate-800/40">
                     <div className="flex items-center gap-2">
@@ -252,7 +252,7 @@ export default function WeeklyView({ currentUserId, currentUserName }: WeeklyVie
                               key={dateStr}
                               className={`text-center py-2 border-b border-gray-100 dark:border-slate-700/50 ${
                                 isToday
-                                  ? 'bg-blue-50 dark:bg-blue-500/10 font-semibold text-blue-700 dark:text-blue-400'
+                                  ? 'bg-cyan-50 dark:bg-cyan-500/10 font-semibold text-cyan-700 dark:text-cyan-400'
                                   : 'text-gray-500 dark:text-slate-400'
                               }`}
                             >

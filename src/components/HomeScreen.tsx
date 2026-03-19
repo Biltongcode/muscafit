@@ -49,15 +49,15 @@ export default function HomeScreen({ currentUserName }: HomeScreenProps) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 sm:mb-10">
           <button
             onClick={() => router.push('/daily')}
-            className="glass rounded-2xl p-6 text-left hover:ring-2 hover:ring-blue-500/30 dark:hover:ring-blue-400/30 transition-all group touch-target"
+            className="glass rounded-2xl p-6 text-left hover:ring-2 hover:ring-cyan-500/30 dark:hover:ring-cyan-400/30 transition-all group touch-target"
           >
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-violet-500 flex items-center justify-center flex-shrink-0">
                 <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
               </div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
                 Daily Tracker
               </h2>
             </div>
@@ -68,7 +68,7 @@ export default function HomeScreen({ currentUserName }: HomeScreenProps) {
 
           <button
             onClick={() => router.push('/weekly')}
-            className="glass rounded-2xl p-6 text-left hover:ring-2 hover:ring-blue-500/30 dark:hover:ring-blue-400/30 transition-all group touch-target"
+            className="glass rounded-2xl p-6 text-left hover:ring-2 hover:ring-cyan-500/30 dark:hover:ring-cyan-400/30 transition-all group touch-target"
           >
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center flex-shrink-0">
@@ -117,7 +117,7 @@ export default function HomeScreen({ currentUserName }: HomeScreenProps) {
             </svg>
           </div>
           <div>
-            <h2 className="text-base font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
               My Exercises
             </h2>
             <p className="text-sm text-gray-500 dark:text-slate-400">
@@ -139,25 +139,25 @@ export default function HomeScreen({ currentUserName }: HomeScreenProps) {
           </h3>
           <ul className="space-y-3">
             <li className="flex items-start gap-3">
-              <span className="mt-0.5 w-6 h-6 rounded-full bg-blue-500/10 dark:bg-blue-400/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">1</span>
+              <span className="mt-0.5 w-6 h-6 rounded-full bg-cyan-500/10 dark:bg-cyan-400/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">1</span>
               <p className="text-sm text-gray-600 dark:text-slate-300">
                 <strong>Set up your exercises</strong> &mdash; reps, sets, weighted, or timed. Schedule them to specific days if you like.
               </p>
             </li>
             <li className="flex items-start gap-3">
-              <span className="mt-0.5 w-6 h-6 rounded-full bg-blue-500/10 dark:bg-blue-400/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">2</span>
+              <span className="mt-0.5 w-6 h-6 rounded-full bg-cyan-500/10 dark:bg-cyan-400/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">2</span>
               <p className="text-sm text-gray-600 dark:text-slate-300">
                 <strong>Check them off daily</strong> &mdash; tick the box when done. Log runs, walks, or gym sessions too.
               </p>
             </li>
             <li className="flex items-start gap-3">
-              <span className="mt-0.5 w-6 h-6 rounded-full bg-blue-500/10 dark:bg-blue-400/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">3</span>
+              <span className="mt-0.5 w-6 h-6 rounded-full bg-cyan-500/10 dark:bg-cyan-400/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">3</span>
               <p className="text-sm text-gray-600 dark:text-slate-300">
                 <strong>Invite a friend</strong> &mdash; see each other&apos;s progress, leave comments, and stay motivated together.
               </p>
             </li>
             <li className="flex items-start gap-3">
-              <span className="mt-0.5 w-6 h-6 rounded-full bg-blue-500/10 dark:bg-blue-400/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">4</span>
+              <span className="mt-0.5 w-6 h-6 rounded-full bg-cyan-500/10 dark:bg-cyan-400/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">4</span>
               <p className="text-sm text-gray-600 dark:text-slate-300">
                 <strong>Track your progress</strong> &mdash; set goals, view stats, and review your week at a glance.
               </p>

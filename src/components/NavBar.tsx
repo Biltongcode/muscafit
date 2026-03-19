@@ -63,9 +63,9 @@ export default function NavBar({ currentUserName, active, isAdmin: isAdminProp }
   }, [pathname]);
 
   const navItems = [
-    { key: 'daily', label: 'Daily', path: '/daily', activeColor: 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400' },
-    { key: 'weekly', label: 'Weekly', path: '/weekly', activeColor: 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400' },
-    { key: 'stats', label: 'Stats', path: '/stats', activeColor: 'bg-purple-50 text-purple-700 dark:bg-purple-500/15 dark:text-purple-400', icon: (
+    { key: 'daily', label: 'Daily', path: '/daily', activeColor: 'bg-cyan-50 text-cyan-700 dark:bg-cyan-500/15 dark:text-cyan-400' },
+    { key: 'weekly', label: 'Weekly', path: '/weekly', activeColor: 'bg-cyan-50 text-cyan-700 dark:bg-cyan-500/15 dark:text-cyan-400' },
+    { key: 'stats', label: 'Stats', path: '/stats', activeColor: 'bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-400', icon: (
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
       </svg>
@@ -88,15 +88,15 @@ export default function NavBar({ currentUserName, active, isAdmin: isAdminProp }
   };
 
   return (
-    <header className="glass-strong shadow-sm sticky top-0 z-40" ref={mobileMenuRef}>
+    <header className="glass-strong shadow-sm sticky top-0 z-40 dark:shadow-[0_1px_0_0_rgba(6,182,212,0.1)]" ref={mobileMenuRef}>
       <div className="max-w-5xl mx-auto px-4 py-2 flex items-center justify-between">
         {/* Logo */}
         <button onClick={() => navigate('/')} className="hover:opacity-80 transition-opacity flex items-center">
           <svg viewBox="0 0 260 44" className="h-7 w-auto" aria-label="Muscafit">
             <defs>
               <linearGradient id="navGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style={{stopColor:'#6C8EFF'}}/>
-                <stop offset="100%" style={{stopColor:'#A855F7'}}/>
+                <stop offset="0%" style={{stopColor:'#06B6D4'}}/>
+                <stop offset="100%" style={{stopColor:'#8B5CF6'}}/>
               </linearGradient>
             </defs>
             <rect x="0" y="12" width="4" height="20" rx="2" fill="url(#navGrad)"/>

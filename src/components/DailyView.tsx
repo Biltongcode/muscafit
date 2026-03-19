@@ -365,7 +365,7 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
           <div className="text-center">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{formatDate(date)}</h2>
             {isToday && (
-              <span className="text-xs font-medium text-blue-600 dark:text-blue-400">Today</span>
+              <span className="text-xs font-medium text-cyan-600 dark:text-cyan-400">Today</span>
             )}
           </div>
           <button
@@ -380,7 +380,7 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
           {!isToday && (
             <button
               onClick={() => { setDate(getTodayStr()); setExpandedLog(null); setActivityModal(null); setShowActivityPicker(false); }}
-              className="ml-2 px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 rounded-full hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors"
+              className="ml-2 px-3 py-1.5 text-xs font-medium text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-500/10 rounded-full hover:bg-cyan-100 dark:hover:bg-cyan-500/20 transition-colors"
             >
               Today
             </button>
@@ -624,7 +624,7 @@ function ActivityPicker({
               onChange={(e) => setCustomName(e.target.value)}
               placeholder="e.g. Surfing"
               autoFocus
-              className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:placeholder-slate-500"
+              className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:placeholder-slate-500"
               onKeyDown={(e) => e.key === 'Enter' && handleCustomSubmit()}
             />
             <div className="flex gap-2">
@@ -668,7 +668,7 @@ function ActivityPicker({
             <div className="px-4 py-3 border-t border-gray-100 dark:border-slate-700/50 flex-shrink-0">
               <button
                 onClick={() => setCustomMode(true)}
-                className="w-full text-center text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 py-2"
+                className="w-full text-center text-sm font-medium text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 py-2"
               >
                 + Custom activity
               </button>
@@ -738,7 +738,7 @@ function ActivityModal({
                 onChange={(e) => setDuration(e.target.value)}
                 placeholder="e.g. 45"
                 autoFocus
-                className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:placeholder-slate-500"
+                className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:placeholder-slate-500"
               />
             </div>
             <div className="flex-1">
@@ -749,7 +749,7 @@ function ActivityModal({
                 value={distance}
                 onChange={(e) => setDistance(e.target.value)}
                 placeholder="optional"
-                className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:placeholder-slate-500"
+                className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:placeholder-slate-500"
               />
             </div>
           </div>
@@ -760,7 +760,7 @@ function ActivityModal({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="e.g. easy pace, won 3-1"
-              className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:placeholder-slate-500"
+              className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:placeholder-slate-500"
             />
           </div>
         </div>
@@ -883,14 +883,14 @@ function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave, 
           <div className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
             {formatTarget(exercise)}
             {exercise.actualValue != null && (
-              <span className="ml-1 text-blue-600 dark:text-blue-400">
+              <span className="ml-1 text-cyan-600 dark:text-cyan-400">
                 (did: {exercise.actualValue}
                 {exercise.actualSets != null ? ` in ${exercise.actualSets} sets` : ''}
                 {isWeighted && exercise.actualWeight != null ? ` @ ${exercise.actualWeight}${exercise.weightUnit || 'kg'}` : ''})
               </span>
             )}
             {isDistanceType && exercise.actualDistance != null && (
-              <span className="ml-1 text-blue-600 dark:text-blue-400">
+              <span className="ml-1 text-cyan-600 dark:text-cyan-400">
                 (did: {exercise.actualDistance}{exercise.distanceUnit === 'm' ? 'm' : ' ' + (exercise.distanceUnit || 'm')})
               </span>
             )}
@@ -930,7 +930,7 @@ function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave, 
             onClick={onExpand}
             className={`flex-shrink-0 p-2.5 rounded-xl transition-colors touch-target flex items-center justify-center ${
               isExpanded
-                ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/15'
+                ? 'text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-500/15'
                 : 'text-gray-400 dark:text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-700/50'
             }`}
             aria-label="Edit details"
@@ -957,7 +957,7 @@ function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave, 
                     value={editDistance}
                     onChange={(e) => setEditDistance(e.target.value)}
                     placeholder={exercise.targetDistance?.toString() ?? ''}
-                    className="w-full sm:w-24 px-3 py-2.5 text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full sm:w-24 px-3 py-2.5 text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
                   />
                 </div>
               ) : (
@@ -970,7 +970,7 @@ function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave, 
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value)}
                     placeholder={exercise.targetValue?.toString() ?? ''}
-                    className="w-full sm:w-20 px-3 py-2.5 text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full sm:w-20 px-3 py-2.5 text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
                   />
                 </div>
               )}
@@ -983,7 +983,7 @@ function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave, 
                     value={editSets}
                     onChange={(e) => setEditSets(e.target.value)}
                     placeholder={exercise.targetSets?.toString() ?? ''}
-                    className="w-full sm:w-20 px-3 py-2.5 text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full sm:w-20 px-3 py-2.5 text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
                   />
                 </div>
               )}
@@ -999,7 +999,7 @@ function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave, 
                     value={editWeight}
                     onChange={(e) => setEditWeight(e.target.value)}
                     placeholder={exercise.targetWeight?.toString() ?? ''}
-                    className="w-full sm:w-20 px-3 py-2.5 text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full sm:w-20 px-3 py-2.5 text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
                   />
                 </div>
               )}
@@ -1012,7 +1012,7 @@ function ExerciseRow({ exercise, isOwn, isExpanded, onToggle, onExpand, onSave, 
                 value={editNotes}
                 onChange={(e) => setEditNotes(e.target.value)}
                 placeholder="Optional notes"
-                className="w-full px-3 py-2.5 text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2.5 text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
               />
             </div>
 
@@ -1085,7 +1085,7 @@ function CommentSection({
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Leave a comment..."
-          className="flex-1 px-3 py-2.5 text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:placeholder-slate-500"
+          className="flex-1 px-3 py-2.5 text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:placeholder-slate-500"
         />
         <button
           type="submit"

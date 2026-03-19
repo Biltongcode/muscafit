@@ -37,15 +37,15 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 px-4">
+    <div className="min-h-screen flex items-center justify-center px-4" style={{background: 'radial-gradient(ellipse 80% 60% at 20% 10%, rgba(6,182,212,0.08) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 80% 80%, rgba(139,92,246,0.08) 0%, transparent 60%), rgb(2,6,23)'}}>
       <div className="w-full max-w-sm animate-fade-in">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-3">
             <svg viewBox="0 0 320 80" className="h-16 sm:h-20 w-auto" aria-label="Muscafit">
               <defs>
                 <linearGradient id="loginGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style={{stopColor:'#6C8EFF'}}/>
-                  <stop offset="100%" style={{stopColor:'#A855F7'}}/>
+                  <stop offset="0%" style={{stopColor:'#06B6D4'}}/>
+                  <stop offset="100%" style={{stopColor:'#8B5CF6'}}/>
                 </linearGradient>
                 <filter id="loginGlow">
                   <feGaussianBlur stdDeviation="2" result="cb"/>
@@ -89,7 +89,7 @@ function LoginForm() {
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
-              className="w-full px-3 py-3 border border-slate-600 bg-slate-700/50 text-slate-100 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-slate-500"
+              className="w-full px-3 py-3 border border-slate-600 bg-slate-700/50 text-slate-100 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 placeholder-slate-500"
             />
           </div>
 
@@ -104,7 +104,7 @@ function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               required
               autoComplete="current-password"
-              className="w-full px-3 py-3 border border-slate-600 bg-slate-700/50 text-slate-100 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-slate-500"
+              className="w-full px-3 py-3 border border-slate-600 bg-slate-700/50 text-slate-100 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 placeholder-slate-500"
             />
           </div>
 
