@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import NavBar from './NavBar';
 import Avatar from './Avatar';
+import ChallengeTokens from './ChallengeTokens';
 
 interface DayStats {
   completed: number;
@@ -217,6 +218,8 @@ export default function WeeklyView({ currentUserId, currentUserName }: WeeklyVie
             </div>
           </div>
         ) : null}
+
+        <ChallengeTokens compact />
 
         {loading ? (
           <div className="text-center py-12 text-gray-400 dark:text-slate-500">Loading...</div>

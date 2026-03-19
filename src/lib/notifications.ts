@@ -679,6 +679,32 @@ export async function sendTestEmail(userId: number, type: 'evening' | 'morning' 
   return { sent: true, to: toEmail };
 }
 
+// --- Challenge Expiry ---
+
+async function expireChallenges() {
+  const yesterday = getYesterdayStr();
+
+  // Auto-fail accepted challenges where the challenge date has passed
+  const failed = db.prepare(
+    `UPDATE challenges SET status = 'failed'
+     WHERE status = 'accepted' AND challenge_date < date('now')`,
+  ).run();
+
+  if (failed.changes > 0) {
+    console.log(`[Muscafit] Marked ${failed.changes} challenge(s) as failed (expired)`);
+  }
+
+  // Auto-decline pending challenges where the challenge date has passed
+  const expired = db.prepare(
+    `UPDATE challenges SET status = 'declined', responded_at = CURRENT_TIMESTAMP
+     WHERE status = 'pending' AND challenge_date < date('now')`,
+  ).run();
+
+  if (expired.changes > 0) {
+    console.log(`[Muscafit] Auto-declined ${expired.changes} pending challenge(s) (expired)`);
+  }
+}
+
 // --- Start Cron Jobs ---
 export function startNotificationCrons() {
   // Run every hour on the hour to check if any user needs a notification at this hour
@@ -698,6 +724,11 @@ export function startNotificationCrons() {
       await sendWeeklySummaries();
     } catch (err) {
       console.error('[Muscafit] Weekly summary error:', err);
+    }
+    try {
+      await expireChallenges();
+    } catch (err) {
+      console.error('[Muscafit] Challenge expiry error:', err);
     }
   });
 

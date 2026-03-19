@@ -131,14 +131,30 @@ function ProgressRing({ percent, size = 80 }: { percent: number; size?: number }
   );
 }
 
+interface ChallengeStats {
+  user_id: number;
+  user_name: string;
+  beers: number;
+  poops: number;
+}
+
 export default function StatsView({ currentUserName }: StatsViewProps) {
   const router = useRouter();
   const [period, setPeriod] = useState('month');
   const [exercises, setExercises] = useState<ExerciseStat[]>([]);
   const [activities, setActivities] = useState<ActivityStat[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
+  const [challengeStats, setChallengeStats] = useState<ChallengeStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
+
+  useEffect(() => {
+    // Fetch challenge stats once (not period-dependent)
+    fetch('/api/challenges/stats')
+      .then(r => r.json())
+      .then(d => setChallengeStats(d.stats || []))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -198,6 +214,25 @@ export default function StatsView({ currentUserName }: StatsViewProps) {
             </button>
           ))}
         </div>
+
+        {/* Challenge Tokens */}
+        {challengeStats.length > 0 && (
+          <div className="glass gradient-border rounded-xl shadow-card p-4 mb-6 animate-fade-in">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+              <span>&#x2694;&#xFE0F;</span> Challenge Tokens
+            </h3>
+            <div className="flex flex-wrap gap-4">
+              {challengeStats.map(s => (
+                <div key={s.user_id} className="flex items-center gap-2 bg-gray-50 dark:bg-slate-800/50 rounded-lg px-3 py-2">
+                  <span className="text-sm font-medium text-gray-900 dark:text-slate-100">{s.user_name}</span>
+                  {s.beers > 0 && <span className="text-sm" title={`${s.beers} challenge${s.beers > 1 ? 's' : ''} completed`}>&#x1F37A; {s.beers}</span>}
+                  {s.poops > 0 && <span className="text-sm" title={`${s.poops} challenge${s.poops > 1 ? 's' : ''} failed`}>&#x1F4A9; {s.poops}</span>}
+                  {s.beers === 0 && s.poops === 0 && <span className="text-xs text-gray-400 dark:text-slate-500">No tokens yet</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {dateRange && (
           <p className="text-xs text-gray-400 dark:text-slate-500 text-center mb-6">

@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import NavBar from './NavBar';
 import Avatar from './Avatar';
+import ChallengeModal from './ChallengeModal';
+import ChallengeTokens from './ChallengeTokens';
 import { ACTIVITY_CATALOGUE, getActivityType, getActivityColorClasses } from '@/lib/activity-catalogue';
 
 // --- Types ---
@@ -63,6 +65,25 @@ interface Comment {
 interface FireReaction {
   userId: number;
   userName: string;
+}
+
+interface Challenge {
+  id: number;
+  challenger_id: number;
+  challenged_id: number;
+  challenger_name: string;
+  challenged_name: string;
+  exercise_name: string;
+  target_type: string;
+  target_value: number | null;
+  target_sets: number | null;
+  target_per_set: number | null;
+  target_weight: number | null;
+  weight_unit: string | null;
+  target_distance: number | null;
+  distance_unit: string | null;
+  challenge_date: string;
+  status: string;
 }
 
 interface DailyViewProps {
@@ -132,26 +153,31 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
   } | null>(null);
   const [showActivityPicker, setShowActivityPicker] = useState(false);
   const [fireReactions, setFireReactions] = useState<Record<number, FireReaction[]>>({});
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [challengeModal, setChallengeModal] = useState<{ userId: number; name: string } | null>(null);
 
   const isToday = date === getTodayStr();
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [logsRes, activitiesRes, commentsRes, reactionsRes] = await Promise.all([
+      const [logsRes, activitiesRes, commentsRes, reactionsRes, challengesRes] = await Promise.all([
         fetch(`/api/logs?date=${date}`),
         fetch(`/api/activities?date=${date}`),
         fetch(`/api/comments?date=${date}`),
         fetch(`/api/reactions?date=${date}`),
+        fetch(`/api/challenges?date=${date}`),
       ]);
       const logsData = await logsRes.json();
       const activitiesData = await activitiesRes.json();
       const commentsData = await commentsRes.json();
       const reactionsData = await reactionsRes.json();
+      const challengesData = await challengesRes.json();
       setUsers(logsData.users);
       setActivities(activitiesData.activities);
       setComments(commentsData.comments);
       setFireReactions(reactionsData.reactions || {});
+      setChallenges(challengesData.challenges || []);
     } catch (err) {
       console.error('Failed to fetch data:', err);
     }
@@ -387,6 +413,8 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
           )}
         </div>
 
+        <ChallengeTokens compact />
+
         {loading ? (
           <div className="text-center py-12 text-gray-400 dark:text-slate-500">Loading...</div>
         ) : (
@@ -409,19 +437,30 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
                         {isOwn && <span className="text-xs text-gray-400 dark:text-slate-500 ml-1">(you)</span>}
                       </h3>
                     </div>
-                    {total > 0 && (
-                      <span
-                        className={`text-sm font-medium px-2.5 py-1 rounded-full ${
-                          completed === total
-                            ? 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400'
-                            : completed > 0
-                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400'
-                            : 'bg-gray-100 text-gray-500 dark:bg-slate-700/50 dark:text-slate-400'
-                        }`}
-                      >
-                        {completed}/{total}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {!isOwn && (
+                        <button
+                          onClick={() => setChallengeModal({ userId: user.id, name: user.name })}
+                          className="text-xs font-medium px-2.5 py-1 rounded-full bg-gradient-to-r from-cyan-500/10 to-violet-500/10 dark:from-cyan-500/15 dark:to-violet-500/15 text-cyan-700 dark:text-cyan-400 border border-cyan-500/20 dark:border-cyan-500/30 hover:from-cyan-500/20 hover:to-violet-500/20 transition-all"
+                          title="Send a challenge"
+                        >
+                          Challenge
+                        </button>
+                      )}
+                      {total > 0 && (
+                        <span
+                          className={`text-sm font-medium px-2.5 py-1 rounded-full ${
+                            completed === total
+                              ? 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400'
+                              : completed > 0
+                              ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400'
+                              : 'bg-gray-100 text-gray-500 dark:bg-slate-700/50 dark:text-slate-400'
+                          }`}
+                        >
+                          {completed}/{total}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Exercise list */}
@@ -447,6 +486,26 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
                       ))
                     )}
                   </div>
+
+                  {/* Challenge rows */}
+                  {challenges
+                    .filter(c => c.challenged_id === user.id && c.status !== 'declined')
+                    .map(c => (
+                      <ChallengeRow
+                        key={`challenge-${c.id}`}
+                        challenge={c}
+                        isOwn={user.id === currentUserId}
+                        onAction={async (action) => {
+                          await fetch(`/api/challenges/${c.id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action }),
+                          });
+                          fetchData();
+                        }}
+                      />
+                    ))
+                  }
 
                   {/* Activity Cards */}
                   <ActivityCards
@@ -488,6 +547,90 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
           onClose={() => setActivityModal(null)}
         />
       )}
+
+      {/* Challenge Modal */}
+      {challengeModal && (
+        <ChallengeModal
+          targetUserId={challengeModal.userId}
+          targetUserName={challengeModal.name}
+          date={date}
+          onClose={() => setChallengeModal(null)}
+          onSent={() => { setChallengeModal(null); fetchData(); }}
+        />
+      )}
+    </div>
+  );
+}
+
+// --- Challenge Row ---
+
+function formatChallengeTarget(c: Challenge): string {
+  if (c.target_type === 'distance') return `${c.target_distance}${c.distance_unit === 'm' ? 'm' : ' ' + c.distance_unit}`;
+  if (c.target_type === 'weighted') return `${c.target_sets}\u00d7${c.target_per_set} @ ${c.target_weight}${c.weight_unit || 'kg'}`;
+  if (c.target_type === 'reps_sets') return `${c.target_value} in ${c.target_sets}\u00d7${c.target_per_set}`;
+  if (c.target_type?.startsWith('timed')) return `${c.target_value} sec`;
+  return `${c.target_value} reps`;
+}
+
+function ChallengeRow({ challenge: c, isOwn, onAction }: {
+  challenge: Challenge;
+  isOwn: boolean;
+  onAction: (action: 'accept' | 'decline' | 'complete') => void;
+}) {
+  const [acting, setActing] = useState(false);
+
+  const handleAction = async (action: 'accept' | 'decline' | 'complete') => {
+    setActing(true);
+    await onAction(action);
+    setActing(false);
+  };
+
+  return (
+    <div className="mx-3 my-2 rounded-xl border-2 border-dashed border-cyan-500/40 dark:border-cyan-500/30 bg-gradient-to-r from-cyan-500/5 to-violet-500/5 dark:from-cyan-500/10 dark:to-violet-500/10 p-3 animate-fade-in">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="text-base">&#x2694;&#xFE0F;</span>
+            <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">{c.exercise_name}</span>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+            {formatChallengeTarget(c)} &middot; from {c.challenger_name}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {c.status === 'pending' && isOwn && (
+            <>
+              <button onClick={() => handleAction('accept')} disabled={acting}
+                className="px-2.5 py-1 text-xs font-medium rounded-lg bg-green-500/15 text-green-700 dark:text-green-400 border border-green-500/30 hover:bg-green-500/25 transition-colors disabled:opacity-50">
+                Accept
+              </button>
+              <button onClick={() => handleAction('decline')} disabled={acting}
+                className="px-2.5 py-1 text-xs font-medium rounded-lg bg-gray-100 dark:bg-slate-700/50 text-gray-500 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors disabled:opacity-50">
+                Decline
+              </button>
+            </>
+          )}
+          {c.status === 'pending' && !isOwn && (
+            <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">Pending</span>
+          )}
+          {c.status === 'accepted' && isOwn && (
+            <button onClick={() => handleAction('complete')} disabled={acting}
+              className="px-3 py-1 text-xs font-bold rounded-lg gradient-btn disabled:opacity-50">
+              Done!
+            </button>
+          )}
+          {c.status === 'accepted' && !isOwn && (
+            <span className="text-xs text-cyan-600 dark:text-cyan-400 font-medium">Accepted</span>
+          )}
+          {c.status === 'completed' && (
+            <span className="text-lg" title="Challenge completed!">&#x1F37A;</span>
+          )}
+          {c.status === 'failed' && (
+            <span className="text-lg" title="Challenge failed!">&#x1F4A9;</span>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

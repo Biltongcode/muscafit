@@ -200,4 +200,29 @@ db.exec(`
   );
 `);
 
+// Challenges table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS challenges (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    challenger_id INTEGER NOT NULL REFERENCES users(id),
+    challenged_id INTEGER NOT NULL REFERENCES users(id),
+    exercise_name TEXT NOT NULL,
+    target_type TEXT NOT NULL,
+    target_value INTEGER,
+    target_sets INTEGER,
+    target_per_set INTEGER,
+    target_weight REAL,
+    weight_unit TEXT,
+    target_distance REAL,
+    distance_unit TEXT,
+    challenge_date DATE NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    week_key TEXT NOT NULL,
+    accept_token TEXT UNIQUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    responded_at DATETIME,
+    completed_at DATETIME
+  );
+`);
+
 export default db;
