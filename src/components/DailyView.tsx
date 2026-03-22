@@ -7,7 +7,7 @@ import Avatar from './Avatar';
 import ChallengeModal from './ChallengeModal';
 import ChallengeTokens from './ChallengeTokens';
 import QuickLogModal from './QuickLogModal';
-import { ACTIVITY_CATALOGUE, getActivityType, getActivityColorClasses } from '@/lib/activity-catalogue';
+import { getActivityType, getActivityColorClasses } from '@/lib/activity-catalogue';
 
 // --- Types ---
 
@@ -152,7 +152,6 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
     type: string;
     existing: Activity | null;
   } | null>(null);
-  const [showActivityPicker, setShowActivityPicker] = useState(false);
   const [fireReactions, setFireReactions] = useState<Record<number, FireReaction[]>>({});
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [challengeModal, setChallengeModal] = useState<{ userId: number; name: string } | null>(null);
@@ -199,7 +198,7 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
     setDate(`${y}-${m}-${day}`);
     setExpandedLog(null);
     setActivityModal(null);
-    setShowActivityPicker(false);
+    setShowQuickLog(false);
   };
 
   const toggleExercise = async (userId: number, logId: number, exerciseId: number, currentCompleted: boolean) => {
@@ -288,11 +287,6 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
   const handleActivityCardClick = (activity: Activity) => {
     if (activity.userId !== currentUserId) return;
     setActivityModal({ userId: activity.userId, type: activity.activityType, existing: activity });
-  };
-
-  const handlePickerSelect = (type: string) => {
-    setShowActivityPicker(false);
-    setActivityModal({ userId: currentUserId, type, existing: null });
   };
 
   const isFutureDate = date > getTodayStr();
@@ -407,7 +401,7 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
           </button>
           {!isToday && (
             <button
-              onClick={() => { setDate(getTodayStr()); setExpandedLog(null); setActivityModal(null); setShowActivityPicker(false); }}
+              onClick={() => { setDate(getTodayStr()); setExpandedLog(null); setActivityModal(null); setShowQuickLog(false); }}
               className="ml-2 px-3 py-1.5 text-xs font-medium text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-500/10 rounded-full hover:bg-cyan-100 dark:hover:bg-cyan-500/20 transition-colors"
             >
               Today
@@ -440,15 +434,6 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
                       </h3>
                     </div>
                     <div className="flex items-center gap-2">
-                      {isOwn && (
-                        <button
-                          onClick={() => setShowQuickLog(true)}
-                          className="text-xs font-medium px-2.5 py-1 rounded-full bg-gradient-to-r from-green-500/10 to-emerald-500/10 dark:from-green-500/15 dark:to-emerald-500/15 text-green-700 dark:text-green-400 border border-green-500/20 dark:border-green-500/30 hover:from-green-500/20 hover:to-emerald-500/20 transition-all"
-                          title="Quick log an exercise"
-                        >
-                          + Quick Log
-                        </button>
-                      )}
                       {!isOwn && (
                         <button
                           onClick={() => setChallengeModal({ userId: user.id, name: user.name })}
@@ -524,7 +509,7 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
                     isOwn={isOwn}
                     isFutureDate={isFutureDate}
                     onCardClick={handleActivityCardClick}
-                    onAddClick={() => setShowActivityPicker(true)}
+                    onAddClick={() => setShowQuickLog(true)}
                   />
 
                   {/* Comments */}
@@ -538,14 +523,6 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
           </div>
         )}
       </div>
-
-      {/* Activity Picker Modal */}
-      {showActivityPicker && (
-        <ActivityPicker
-          onSelect={handlePickerSelect}
-          onClose={() => setShowActivityPicker(false)}
-        />
-      )}
 
       {/* Activity Detail Modal */}
       {activityModal && (
@@ -570,12 +547,17 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
         />
       )}
 
-      {/* Quick Log Modal */}
+      {/* Unified Log Modal */}
       {showQuickLog && (
         <QuickLogModal
           date={date}
+          isFutureDate={isFutureDate}
           onClose={() => setShowQuickLog(false)}
           onSaved={() => { setShowQuickLog(false); fetchData(); }}
+          onActivitySelect={(type) => {
+            setShowQuickLog(false);
+            setActivityModal({ userId: currentUserId, type, existing: null });
+          }}
         />
       )}
     </div>
@@ -734,111 +716,9 @@ function ActivityCards({
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          {isFutureDate ? 'Plan activity' : 'Log activity'}
+          {isFutureDate ? '+ Plan' : '+ Log'}
         </button>
       )}
-    </div>
-  );
-}
-
-// --- Activity Picker ---
-
-function ActivityPicker({
-  onSelect,
-  onClose,
-}: {
-  onSelect: (type: string) => void;
-  onClose: () => void;
-}) {
-  const [customMode, setCustomMode] = useState(false);
-  const [customName, setCustomName] = useState('');
-
-  const handleCustomSubmit = () => {
-    const key = customName.trim().toLowerCase().replace(/\s+/g, '_');
-    if (key) {
-      onSelect(key);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 dark:bg-black/60" onClick={onClose} />
-      <div className="relative glass rounded-xl shadow-xl dark:shadow-glow w-full max-w-md animate-scale-in max-h-[80vh] flex flex-col">
-        {/* Header */}
-        <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-700/50 flex items-center justify-between flex-shrink-0">
-          <h3 className="font-semibold text-gray-900 dark:text-slate-100">
-            {customMode ? 'Custom Activity' : 'Choose Activity'}
-          </h3>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-gray-400 dark:text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-700/50 transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        {customMode ? (
-          <div className="p-4 space-y-3">
-            <input
-              type="text"
-              value={customName}
-              onChange={(e) => setCustomName(e.target.value)}
-              placeholder="e.g. Surfing"
-              autoFocus
-              className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:placeholder-slate-500"
-              onKeyDown={(e) => e.key === 'Enter' && handleCustomSubmit()}
-            />
-            <div className="flex gap-2">
-              <button
-                onClick={handleCustomSubmit}
-                disabled={!customName.trim()}
-                className="flex-1 py-2.5 gradient-btn rounded-lg text-sm disabled:opacity-40"
-              >
-                Continue
-              </button>
-              <button
-                onClick={() => { setCustomMode(false); setCustomName(''); }}
-                className="px-4 py-2.5 text-gray-600 dark:text-slate-400 text-sm rounded-lg border border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors"
-              >
-                Back
-              </button>
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* Activity grid */}
-            <div className="overflow-y-auto flex-1 p-3">
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                {ACTIVITY_CATALOGUE.map((at) => {
-                  const colors = getActivityColorClasses(at.color);
-                  return (
-                    <button
-                      key={at.key}
-                      onClick={() => onSelect(at.key)}
-                      className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all hover:shadow-sm active:scale-95 ${colors.bg} ${colors.border}`}
-                    >
-                      <span className="text-xl">{at.emoji}</span>
-                      <span className={`text-xs font-medium ${colors.text} leading-tight text-center`}>{at.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Custom option */}
-            <div className="px-4 py-3 border-t border-gray-100 dark:border-slate-700/50 flex-shrink-0">
-              <button
-                onClick={() => setCustomMode(true)}
-                className="w-full text-center text-sm font-medium text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 py-2"
-              >
-                + Custom activity
-              </button>
-            </div>
-          </>
-        )}
-      </div>
     </div>
   );
 }
