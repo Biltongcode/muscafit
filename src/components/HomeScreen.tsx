@@ -177,33 +177,22 @@ export default function HomeScreen({ currentUserName }: HomeScreenProps) {
               <li className="flex items-start gap-2.5">
                 <span className="mt-0.5 w-5 h-5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 flex items-center justify-center flex-shrink-0 text-[10px] font-bold">1</span>
                 <p className="text-sm text-gray-600 dark:text-slate-300">
-                  Open the <strong>Daily Tracker</strong> and tap <strong>&quot;+ Quick Log&quot;</strong> on your card.
+                  Open the <strong>Daily Tracker</strong> and tap <strong>&quot;+ Log&quot;</strong> at the bottom of your card.
                 </p>
               </li>
               <li className="flex items-start gap-2.5">
                 <span className="mt-0.5 w-5 h-5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 flex items-center justify-center flex-shrink-0 text-[10px] font-bold">2</span>
                 <p className="text-sm text-gray-600 dark:text-slate-300">
-                  Search or browse for the exercise you did (e.g. Bench Press, Running).
+                  Choose the <strong>Exercise</strong> tab to log strength work (search or browse by category), or the <strong>Activity</strong> tab to log a run, swim, cycle, gym session, or any other activity.
                 </p>
               </li>
               <li className="flex items-start gap-2.5">
                 <span className="mt-0.5 w-5 h-5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 flex items-center justify-center flex-shrink-0 text-[10px] font-bold">3</span>
                 <p className="text-sm text-gray-600 dark:text-slate-300">
-                  Enter what you did (reps, weight, distance &mdash; whatever applies) and hit <strong>&quot;Log Exercise&quot;</strong>. Done. It shows up on your day as completed.
+                  Enter what you did (reps, weight, distance, duration &mdash; whatever applies) and save. Done. It shows up on your day as completed.
                 </p>
               </li>
             </ol>
-          </div>
-
-          {/* Logging activities */}
-          <div className="mb-5 rounded-xl bg-gray-50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700/50 p-4">
-            <h4 className="text-sm font-bold text-gray-700 dark:text-slate-200 mb-3 flex items-center gap-2">
-              <span className="text-base">&#x1F3C3;</span>
-              Logging activities (runs, swims, gym sessions...)
-            </h4>
-            <p className="text-sm text-gray-600 dark:text-slate-300">
-              On the Daily Tracker, scroll down past your exercises and tap the <strong>+ button</strong> to log a run, swim, walk, cycle, gym session, or any other activity. Pick the type, add duration or distance, and mark it as planned or completed.
-            </p>
           </div>
 
           {/* Social features */}
