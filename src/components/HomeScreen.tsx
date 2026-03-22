@@ -129,40 +129,108 @@ export default function HomeScreen({ currentUserName }: HomeScreenProps) {
           </svg>
         </button>
 
-        {/* How it works */}
-        <div className="glass rounded-2xl p-6">
-          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+        {/* Getting Started Guide */}
+        <div className="glass rounded-2xl p-6 mb-6">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
             <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            How it works
+            Getting Started
           </h3>
-          <ul className="space-y-3">
-            <li className="flex items-start gap-3">
-              <span className="mt-0.5 w-6 h-6 rounded-full bg-cyan-500/10 dark:bg-cyan-400/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">1</span>
-              <p className="text-sm text-gray-600 dark:text-slate-300">
-                <strong>Set up your exercises</strong> &mdash; reps, sets, weighted, or timed. Schedule them to specific days if you like.
-              </p>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="mt-0.5 w-6 h-6 rounded-full bg-cyan-500/10 dark:bg-cyan-400/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">2</span>
-              <p className="text-sm text-gray-600 dark:text-slate-300">
-                <strong>Check them off daily</strong> &mdash; tick the box when done. Log runs, walks, or gym sessions too.
-              </p>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="mt-0.5 w-6 h-6 rounded-full bg-cyan-500/10 dark:bg-cyan-400/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">3</span>
-              <p className="text-sm text-gray-600 dark:text-slate-300">
-                <strong>Invite a friend</strong> &mdash; see each other&apos;s progress, leave comments, and stay motivated together.
-              </p>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="mt-0.5 w-6 h-6 rounded-full bg-cyan-500/10 dark:bg-cyan-400/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center flex-shrink-0 text-xs font-bold">4</span>
-              <p className="text-sm text-gray-600 dark:text-slate-300">
-                <strong>Track your progress</strong> &mdash; set goals, view stats, and review your week at a glance.
-              </p>
-            </li>
-          </ul>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mb-5">
+            There are two ways to use Muscafit. Pick whichever suits you &mdash; or use both.
+          </p>
+
+          {/* Option A: Plan ahead */}
+          <div className="mb-5 rounded-xl bg-gradient-to-r from-cyan-500/5 to-violet-500/5 dark:from-cyan-500/10 dark:to-violet-500/10 border border-cyan-500/10 dark:border-cyan-500/20 p-4">
+            <h4 className="text-sm font-bold text-cyan-700 dark:text-cyan-400 mb-3 flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-cyan-500/15 flex items-center justify-center text-xs font-bold">A</span>
+              Plan your week, then tick it off
+            </h4>
+            <p className="text-xs text-gray-500 dark:text-slate-400 mb-3 italic">Best for: people who like structure and want to follow a routine.</p>
+            <ol className="space-y-2.5">
+              <li className="flex items-start gap-2.5">
+                <span className="mt-0.5 w-5 h-5 rounded-full bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center flex-shrink-0 text-[10px] font-bold">1</span>
+                <p className="text-sm text-gray-600 dark:text-slate-300">
+                  Go to <strong>My Exercises</strong> (above) and add the exercises you want to do. Pick from the catalogue or create your own. Set reps, sets, weight, distance &mdash; whatever applies.
+                </p>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span className="mt-0.5 w-5 h-5 rounded-full bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center flex-shrink-0 text-[10px] font-bold">2</span>
+                <p className="text-sm text-gray-600 dark:text-slate-300">
+                  <strong>Schedule them</strong> to specific days (e.g. Squats on Mon/Wed/Fri). Leave blank to show them every day.
+                </p>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span className="mt-0.5 w-5 h-5 rounded-full bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center flex-shrink-0 text-[10px] font-bold">3</span>
+                <p className="text-sm text-gray-600 dark:text-slate-300">
+                  Open the <strong>Daily Tracker</strong> each day. Your exercises will already be there. Tap the checkbox to mark them done. Tap the exercise row to log what you actually did (more reps, heavier weight, etc).
+                </p>
+              </li>
+            </ol>
+          </div>
+
+          {/* Option B: Quick Log */}
+          <div className="mb-5 rounded-xl bg-gradient-to-r from-green-500/5 to-emerald-500/5 dark:from-green-500/10 dark:to-emerald-500/10 border border-green-500/10 dark:border-green-500/20 p-4">
+            <h4 className="text-sm font-bold text-green-700 dark:text-green-400 mb-3 flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-green-500/15 flex items-center justify-center text-xs font-bold">B</span>
+              Just log what you did
+            </h4>
+            <p className="text-xs text-gray-500 dark:text-slate-400 mb-3 italic">Best for: people who don&apos;t plan ahead and want to record a workout after they&apos;ve done it.</p>
+            <ol className="space-y-2.5">
+              <li className="flex items-start gap-2.5">
+                <span className="mt-0.5 w-5 h-5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 flex items-center justify-center flex-shrink-0 text-[10px] font-bold">1</span>
+                <p className="text-sm text-gray-600 dark:text-slate-300">
+                  Open the <strong>Daily Tracker</strong> and tap <strong>&quot;+ Quick Log&quot;</strong> on your card.
+                </p>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span className="mt-0.5 w-5 h-5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 flex items-center justify-center flex-shrink-0 text-[10px] font-bold">2</span>
+                <p className="text-sm text-gray-600 dark:text-slate-300">
+                  Search or browse for the exercise you did (e.g. Bench Press, Running).
+                </p>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span className="mt-0.5 w-5 h-5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 flex items-center justify-center flex-shrink-0 text-[10px] font-bold">3</span>
+                <p className="text-sm text-gray-600 dark:text-slate-300">
+                  Enter what you did (reps, weight, distance &mdash; whatever applies) and hit <strong>&quot;Log Exercise&quot;</strong>. Done. It shows up on your day as completed.
+                </p>
+              </li>
+            </ol>
+          </div>
+
+          {/* Logging activities */}
+          <div className="mb-5 rounded-xl bg-gray-50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700/50 p-4">
+            <h4 className="text-sm font-bold text-gray-700 dark:text-slate-200 mb-3 flex items-center gap-2">
+              <span className="text-base">&#x1F3C3;</span>
+              Logging activities (runs, swims, gym sessions...)
+            </h4>
+            <p className="text-sm text-gray-600 dark:text-slate-300">
+              On the Daily Tracker, scroll down past your exercises and tap the <strong>+ button</strong> to log a run, swim, walk, cycle, gym session, or any other activity. Pick the type, add duration or distance, and mark it as planned or completed.
+            </p>
+          </div>
+
+          {/* Social features */}
+          <div className="rounded-xl bg-gray-50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700/50 p-4">
+            <h4 className="text-sm font-bold text-gray-700 dark:text-slate-200 mb-3 flex items-center gap-2">
+              <span className="text-base">&#x1F91D;</span>
+              Staying connected
+            </h4>
+            <ul className="space-y-2">
+              <li className="text-sm text-gray-600 dark:text-slate-300">
+                <strong>Add connections</strong> &mdash; go to Settings &gt; Connections and enter a friend&apos;s email. Once they accept, you&apos;ll see each other&apos;s workouts.
+              </li>
+              <li className="text-sm text-gray-600 dark:text-slate-300">
+                <strong>Comments</strong> &mdash; leave a comment on someone&apos;s day to encourage them. They&apos;ll get an email notification.
+              </li>
+              <li className="text-sm text-gray-600 dark:text-slate-300">
+                <strong>Fire reactions</strong> &#x1F525; &mdash; tap the fire icon on any completed exercise to give someone props.
+              </li>
+              <li className="text-sm text-gray-600 dark:text-slate-300">
+                <strong>Challenges</strong> &#x2694;&#xFE0F; &mdash; challenge a connection to complete a specific exercise. If they do it, they earn a &#x1F37A;. If they don&apos;t, they get a &#x1F4A9;. You can send one challenge per person per week.
+              </li>
+            </ul>
+          </div>
         </div>
       </main>
     </div>
