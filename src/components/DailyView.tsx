@@ -6,6 +6,7 @@ import NavBar from './NavBar';
 import Avatar from './Avatar';
 import ChallengeModal from './ChallengeModal';
 import ChallengeTokens from './ChallengeTokens';
+import QuickLogModal from './QuickLogModal';
 import { ACTIVITY_CATALOGUE, getActivityType, getActivityColorClasses } from '@/lib/activity-catalogue';
 
 // --- Types ---
@@ -155,6 +156,7 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
   const [fireReactions, setFireReactions] = useState<Record<number, FireReaction[]>>({});
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [challengeModal, setChallengeModal] = useState<{ userId: number; name: string } | null>(null);
+  const [showQuickLog, setShowQuickLog] = useState(false);
 
   const isToday = date === getTodayStr();
 
@@ -438,6 +440,15 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
                       </h3>
                     </div>
                     <div className="flex items-center gap-2">
+                      {isOwn && (
+                        <button
+                          onClick={() => setShowQuickLog(true)}
+                          className="text-xs font-medium px-2.5 py-1 rounded-full bg-gradient-to-r from-green-500/10 to-emerald-500/10 dark:from-green-500/15 dark:to-emerald-500/15 text-green-700 dark:text-green-400 border border-green-500/20 dark:border-green-500/30 hover:from-green-500/20 hover:to-emerald-500/20 transition-all"
+                          title="Quick log an exercise"
+                        >
+                          + Quick Log
+                        </button>
+                      )}
                       {!isOwn && (
                         <button
                           onClick={() => setChallengeModal({ userId: user.id, name: user.name })}
@@ -556,6 +567,15 @@ export default function DailyView({ currentUserId, currentUserName, currentUserA
           date={date}
           onClose={() => setChallengeModal(null)}
           onSent={() => { setChallengeModal(null); fetchData(); }}
+        />
+      )}
+
+      {/* Quick Log Modal */}
+      {showQuickLog && (
+        <QuickLogModal
+          date={date}
+          onClose={() => setShowQuickLog(false)}
+          onSaved={() => { setShowQuickLog(false); fetchData(); }}
         />
       )}
     </div>
