@@ -113,6 +113,13 @@ export const EXERCISE_CATALOGUE: CatalogueExercise[] = [
   { name: 'Yoga', category: 'Flexibility', defaultTargetType: 'timed' },
   { name: 'Foam Rolling', category: 'Flexibility', defaultTargetType: 'timed' },
   { name: 'Pilates', category: 'Flexibility', defaultTargetType: 'timed' },
+
+  // Breathwork / Recovery
+  { name: 'Wim Hof Breathing', category: 'Breathwork', defaultTargetType: 'reps' },
+  { name: 'Box Breathing', category: 'Breathwork', defaultTargetType: 'reps' },
+  { name: 'Cold Shower', category: 'Breathwork', defaultTargetType: 'timed' },
+  { name: 'Ice Bath', category: 'Breathwork', defaultTargetType: 'timed' },
+  { name: 'Meditation', category: 'Breathwork', defaultTargetType: 'timed' },
 ];
 
 export const CATALOGUE_CATEGORIES = [
@@ -123,6 +130,7 @@ export const CATALOGUE_CATEGORIES = [
   'Running',
   'Cardio',
   'Flexibility',
+  'Breathwork',
 ];
 
 export function getCatalogueByCategory(): Map<string, CatalogueExercise[]> {
